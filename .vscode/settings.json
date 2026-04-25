@@ -1,0 +1,4 @@
+{
+  "svelte.kit.root": "./apps/hub",
+  "typescript.tsdk": "./node_modules/typescript/lib"
+}

@@ -28,5 +28,10 @@
     "db:migrate:deploy": "deno task --cwd packages/schema db:migrate:deploy",
     "db:studio": "deno task --cwd packages/schema db:studio"
   },
-  "allowScripts": ["npm:@clerk/shared@4.8.3", "npm:@prisma/client@6.19.2", "npm:@prisma/engines@6.19.2", "npm:esbuild@0.21.5", "npm:prisma@6.19.2"]
+  "allowScripts": ["npm:@clerk/shared@4.8.3", "npm:@prisma/client@6.19.2", "npm:@prisma/engines@6.19.2", "npm:esbuild@0.21.5", "npm:prisma@6.19.2"],
+  "deploy": {
+    "org": "saltcollective",
+    "app": "saltcollective"
+  }
 }
+
