@@ -1,0 +1,23 @@
+# Build output
+build/
+dist/
+.svelte-kit/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Prisma generated
+*.db
+*.db-journal
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Deno cache
+.deno/

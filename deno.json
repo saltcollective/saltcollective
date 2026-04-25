@@ -1,0 +1,32 @@
+{
+  "workspace": [
+    "apps/hub",
+    "packages/config",
+    "packages/schema",
+    "packages/ui"
+  ],
+  "fmt": {
+    "exclude": ["**/*.svelte", "**/*.css", ".svelte-kit/", "node_modules/"]
+  },
+  "lint": {
+    "exclude": [".svelte-kit/", "build/", "node_modules/"],
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "tasks": {
+    "dev": "deno task --cwd apps/hub dev",
+    "build": "deno task --cwd apps/hub build",
+    "preview": "deno task --cwd apps/hub preview",
+    "check": "deno task --cwd apps/hub check",
+    "format": "npm run format",
+    "format:check": "npm run format:check",
+    "db:generate": "deno task --cwd packages/schema db:generate",
+    "db:push": "deno task --cwd packages/schema db:push",
+    "db:migrate": "deno task --cwd packages/schema db:migrate",
+    "db:migrate:reset": "deno task --cwd packages/schema db:migrate:reset",
+    "db:migrate:deploy": "deno task --cwd packages/schema db:migrate:deploy",
+    "db:studio": "deno task --cwd packages/schema db:studio"
+  },
+  "allowScripts": ["npm:@clerk/shared@4.8.3", "npm:@prisma/client@6.19.2", "npm:@prisma/engines@6.19.2", "npm:esbuild@0.21.5", "npm:prisma@6.19.2"]
+}

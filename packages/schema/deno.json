@@ -1,0 +1,13 @@
+{
+  "name": "@saltcollective/schema",
+  "version": "0.0.1",
+  "exports": "./src/index.ts",
+  "tasks": {
+    "db:generate": "deno run -A npm:prisma generate --no-engine",
+    "db:push": "deno run -A npm:prisma db push",
+    "db:migrate": "deno run -A npm:prisma migrate dev",
+    "db:migrate:reset": "deno run -A npm:prisma migrate reset",
+    "db:migrate:deploy": "deno run -A npm:prisma migrate deploy",
+    "db:studio": "deno run -A npm:prisma studio"
+  }
+}

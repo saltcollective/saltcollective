@@ -1,0 +1,8 @@
+{
+  "name": "@saltcollective/config",
+  "version": "0.0.1",
+  "exports": {
+    "./tsconfig/base": "./tsconfig.base.json",
+    "./tsconfig/svelte": "./tsconfig.svelte.json"
+  }
+}

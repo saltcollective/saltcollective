@@ -1,0 +1,15 @@
+{
+  "name": "saltcollective-club-hub",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/hub", "packages/ui", "packages/schema"],
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "prettier-plugin-svelte": "^3.2.0",
+    "svelte": "^5.0.0"
+  }
+}

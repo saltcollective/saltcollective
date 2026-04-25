@@ -1,0 +1,11 @@
+{
+  "name": "@saltcollective/ui",
+  "version": "0.0.1",
+  "type": "module",
+  "dependencies": {
+    "bits-ui": "^1.0.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}
