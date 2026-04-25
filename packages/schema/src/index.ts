@@ -1,50 +1,26 @@
-import process from 'node:process';
-
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
-
+// @prisma/client/default.js spreads a require() into module.exports, which
+// prevents Node.js from statically analyzing named ESM exports. Default import
+// + destructure is the only reliable pattern across dev (external CJS) and
+// build (Rollup-bundled ESM).
+import prismaClientPkg from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
-const { Pool } = pg;
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: InstanceType<typeof PrismaClient> | undefined;
-};
+const { PrismaClient } = prismaClientPkg;
+type Client = InstanceType<typeof PrismaClient>;
 
-function getEnv(key: string): string | undefined {
-  // Works in both Deno and Node.js (Vite/SvelteKit)
-  if (typeof (globalThis as unknown as { Deno?: { env: { get(k: string): string | undefined } } }).Deno !== 'undefined') {
-    return (globalThis as unknown as { Deno: { env: { get(k: string): string | undefined } } }).Deno.env.get(key);
-  }
-  if (typeof process !== 'undefined') return process.env[key];
-  return undefined;
+function createClient(): Client {
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  return new PrismaClient({ adapter });
 }
 
-function createPrismaClient(): InstanceType<typeof PrismaClient> {
-  const connectionString = getEnv('DATABASE_URL');
+let _client: Client | undefined;
 
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is required');
-  }
-
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaPg(pool);
-
-  return new PrismaClient({ adapter, log: ['error'] });
-}
-
-function getPrismaClient(): InstanceType<typeof PrismaClient> {
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = createPrismaClient();
-  }
-  return globalForPrisma.prisma;
-}
-
-export const prisma = new Proxy({} as InstanceType<typeof PrismaClient>, {
-  get(_target, prop) {
-    return Reflect.get(getPrismaClient(), prop);
+export const prisma = new Proxy({} as Client, {
+  get(_, prop) {
+    if (!_client) _client = createClient();
+    return _client[prop as keyof Client];
   },
 });
 
 export default prisma;
-export * from '@prisma/client';
+export type * from '@prisma/client';

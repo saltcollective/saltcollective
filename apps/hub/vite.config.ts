@@ -1,20 +1,12 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
-import { fileURLToPath } from 'node:url';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [sveltekit()],
   ssr: {
-    // Prisma and pg use CJS internally. Bundling them with Rollup converts
-    // CJS → ESM so Deno Deploy's build runner can process them.
-    noExternal: ['@prisma/client', '.prisma', '@prisma/adapter-pg', 'pg'],
+    // In dev, packages are external so Node.js handles CJS natively.
+    // In build, bundle the generated Prisma CJS client so Rollup converts it
+    // to ESM — Deno's build runner rejects bare CJS `module` globals.
+    noExternal: command === 'build' ? ['@prisma/client', '.prisma'] : [],
   },
-  resolve: {
-    alias: {
-      '@saltcollective/ui': fileURLToPath(new URL('../../packages/ui/src', import.meta.url)),
-      '@saltcollective/schema': fileURLToPath(
-        new URL('../../packages/schema/src', import.meta.url)
-      ),
-    },
-  },
-});
+}));

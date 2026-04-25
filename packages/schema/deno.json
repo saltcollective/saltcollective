@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "exports": "./src/index.ts",
   "imports": {
-    "@prisma/adapter-pg": "npm:@prisma/adapter-pg@^6.0.0",
     "@prisma/client": "npm:@prisma/client@^6.0.0",
+    "@prisma/adapter-pg": "npm:@prisma/adapter-pg@^6.0.0",
     "pg": "npm:pg@^8.0.0"
   },
   "tasks": {
