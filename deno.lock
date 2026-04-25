@@ -2,7 +2,6 @@
   "version": "5",
   "specifiers": {
     "npm:@prisma/client@6": "6.19.2_prisma@6.19.2__typescript@5.9.3_typescript@5.9.3",
-    "npm:@prisma/extension-accelerate@1": "1.3.0_@prisma+client@6.19.2__prisma@6.19.2___typescript@5.9.3__typescript@5.9.3_prisma@6.19.2__typescript@5.9.3_typescript@5.9.3",
     "npm:@sveltejs/adapter-auto@3": "3.3.1_@sveltejs+kit@2.55.0__@sveltejs+vite-plugin-svelte@4.0.4___svelte@5.55.1____acorn@8.16.0___vite@5.4.21__svelte@5.55.1___acorn@8.16.0__typescript@5.9.3__vite@5.4.21__acorn@8.16.0_@sveltejs+vite-plugin-svelte@4.0.4__svelte@5.55.1___acorn@8.16.0__vite@5.4.21_svelte@5.55.1__acorn@8.16.0_typescript@5.9.3_vite@5.4.21",
     "npm:@sveltejs/kit@2": "2.55.0_@sveltejs+vite-plugin-svelte@4.0.4__svelte@5.55.1___acorn@8.16.0__vite@5.4.21_svelte@5.55.1__acorn@8.16.0_typescript@5.9.3_vite@5.4.21_acorn@8.16.0",
     "npm:@sveltejs/vite-plugin-svelte@4": "4.0.4_svelte@5.55.1__acorn@8.16.0_vite@5.4.21",
@@ -977,10 +976,17 @@
         }
       },
       "packages/schema": {
+        "dependencies": [
+          "npm:@prisma/adapter-pg@6",
+          "npm:@prisma/client@6",
+          "npm:pg@8"
+        ],
         "packageJson": {
           "dependencies": [
+            "npm:@prisma/adapter-pg@6",
             "npm:@prisma/client@6",
-            "npm:@prisma/extension-accelerate@1",
+            "npm:@types/pg@8",
+            "npm:pg@8",
             "npm:prisma@6"
           ]
         }

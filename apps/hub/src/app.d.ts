@@ -1,10 +1,18 @@
-import type { SessionAuthObject, User } from '@clerk/backend';
+import type { SessionAuthObject } from '@clerk/backend';
 import type { PendingSessionOptions } from '@clerk/shared/types';
+import type { UserType } from '@saltcollective/schema';
+
 declare global {
   namespace App {
     // interface Error {}
     interface Locals {
       auth: (options?: PendingSessionOptions) => SessionAuthObject;
+      user: {
+        id: string;
+        username: string | null;
+        email: string;
+        userType: UserType;
+      } | null;
     }
     // interface PageData {}
     // interface PageState {}

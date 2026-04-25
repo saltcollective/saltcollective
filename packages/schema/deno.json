@@ -2,8 +2,13 @@
   "name": "@saltcollective/schema",
   "version": "0.0.1",
   "exports": "./src/index.ts",
+  "imports": {
+    "@prisma/adapter-pg": "npm:@prisma/adapter-pg@^6.0.0",
+    "@prisma/client": "npm:@prisma/client@^6.0.0",
+    "pg": "npm:pg@^8.0.0"
+  },
   "tasks": {
-    "db:generate": "deno run -A npm:prisma generate --no-engine",
+    "db:generate": "deno run -A npm:prisma generate",
     "db:push": "deno run -A npm:prisma db push",
     "db:migrate": "deno run -A npm:prisma migrate dev",
     "db:migrate:reset": "deno run -A npm:prisma migrate reset",

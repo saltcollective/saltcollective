@@ -6,3 +6,20 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum UserType {
+  SITE_ADMIN
+  HUB_ADMIN
+  HUB_EDITOR
+  USER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  username  String?  @unique
+  email     String   @unique
+  userType  UserType @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

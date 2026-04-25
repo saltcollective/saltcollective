@@ -3,10 +3,12 @@
   "version": "0.0.1",
   "type": "module",
   "dependencies": {
+    "@prisma/adapter-pg": "^6.0.0",
     "@prisma/client": "^6.0.0",
-    "@prisma/extension-accelerate": "^1.0.0"
+    "pg": "^8.0.0"
   },
   "devDependencies": {
+    "@types/pg": "^8.0.0",
     "prisma": "^6.0.0"
   }
 }
