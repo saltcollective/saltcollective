@@ -36,10 +36,36 @@ Root `deno.json` declares workspaces and Deno-level lint/fmt rules. Each workspa
 ## Key Conventions
 
 ### Components (`packages/ui`)
-- Bits UI provides headless, accessible primitives
-- All styling via CSS modules — use `<style module>` in `.svelte` files, access classes via `$style.className`
+- Bits UI provides headless, accessible primitives (used selectively — see below)
+- All styling via **Svelte's built-in scoped CSS** — use plain `<style>` blocks (not `<style module>`). Svelte 5 reserves `$`-prefixed identifiers for runes; `$style` from vite-plugin-svelte CSS modules is not compatible.
+- Use plain string class names in templates: `class="button {variant} {size}"`. Svelte scopes all selectors defined in `<style>` to the component automatically.
+- **Do not pass parent-scoped classes to child components** — Svelte's scope hash doesn't cross component boundaries via the `class` prop. Instead, wrap with a div in the parent template (children rendered via snippets retain the parent's scope).
+- Components use **native HTML elements** directly in their templates (not wrapped components) so that Svelte's scoping applies correctly. Bits UI is used for complex headless primitives (Accordion, Dialog, etc.), not for simple elements like button/label.
 - Components must be **generic and schema-agnostic**
 - Database-aware wrappers or adapters that bind to schema shapes live in `apps/hub`, not `packages/ui`
+- **As new pages are built in `apps/hub`, extract reusable UI into `packages/ui` as part of that work** — don't defer it
+
+#### Design tokens
+CSS custom properties defined in `packages/ui/src/tokens.css`, imported once in the root `+layout.svelte`. All component styles reference these variables — no hardcoded values.
+
+#### Layout system
+- `Container.svelte` — max-width 1200px, centered, with horizontal padding. Use as a section wrapper.
+- `Grid.svelte` — CSS Grid primitive. For responsive layouts, define grid rules in each page/component's own `<style>` block.
+- Route group layouts (`(marketing)/+layout.svelte`, `(app)/+layout.svelte`, etc.) define page shells — nav, footer, sidebars.
+
+#### Current atoms (`packages/ui/src/lib/`)
+
+| Component | Description |
+|---|---|
+| `Button.svelte` | Native `button`/`a` element. Props: `variant` (`primary`\|`secondary`\|`ghost`\|`destructive`), `size` (`sm`\|`md`\|`lg`), `href` (renders anchor), `disabled`. All other attrs spread through. |
+| `Label.svelte` | Native `label`. Prop: `required` (adds asterisk via CSS `::after`). Pass `for` via spread. |
+| `Input.svelte` | Compound input — optional `label` string renders a `Label` above, optional `error` string renders message below with red border. `value` is `$bindable`. |
+| `Badge.svelte` | Pure CSS status chip. Prop: `variant` (`default`\|`success`\|`warning`\|`destructive`). |
+| `Grid.svelte` | CSS Grid layout primitive. Props: `cols` (number → `repeat(n,1fr)` or raw CSS string), `gap`, `rowGap`, `colGap`, `as` (polymorphic element tag). |
+| `Container.svelte` | Max-width 1200px centered container. Props: `as` (element tag), `class`. |
+
+#### Export conventions
+`packages/ui/src/index.ts` exports custom components by name (`Button`, `Label`, `Container`, etc.), which intentionally shadow the bits-ui primitives of the same name. Raw bits-ui namespaces are re-exported as `BitsButton` and `BitsLabel` for direct primitive access. All other bits-ui components (`Accordion`, `Dialog`, `Tabs`, etc.) are re-exported unchanged.
 
 ### Schema (`packages/schema`)
 - Contains `prisma/schema.prisma` as the single source of truth for data shapes
