@@ -82,6 +82,7 @@ model Club {
   sponsorTiers SponsorTier[]
   businesses   Business[]
   tags         Tag[]
+  clickEvents  ClickEvent[]
 }
 
 model SponsorTier {
@@ -116,6 +117,7 @@ model Business {
   club        Club        @relation(fields: [clubId], references: [id])
   sponsorTier SponsorTier @relation(fields: [sponsorTierId], references: [id])
   tags        Tag[]
+  clickEvents ClickEvent[]
 }
 
 model Tag {
@@ -128,4 +130,21 @@ model Tag {
   businesses Business[]
 
   @@unique([clubId, name])
+}
+
+enum ClickType {
+  EMAIL
+  WEBSITE
+  PHONE
+}
+
+model ClickEvent {
+  id         String    @id @default(cuid())
+  businessId String
+  clubId     String
+  type       ClickType
+  createdAt  DateTime  @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+  club     Club     @relation(fields: [clubId], references: [id])
 }
