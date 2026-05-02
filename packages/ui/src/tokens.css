@@ -12,9 +12,6 @@
 
 /* ============================================================
    THEME TOKENS
-   Dark is the default. Light activates via:
-     - [data-theme="light"] on <html> or any ancestor
-     - prefers-color-scheme: light (when no data-theme is set)
    ============================================================ */
 
 :root {
