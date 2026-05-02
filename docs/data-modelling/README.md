@@ -9,6 +9,7 @@ Prisma schema lives in `packages/schema/prisma/schema.prisma`. Each model is doc
 | [user.md](user.md) | `User`, `ClubMembership`, `ImpersonationLog` |
 | [club.md](club.md) | `Club` |
 | [sponsor-tier.md](sponsor-tier.md) | `SponsorTier` |
+| [business.md](business.md) | `Business`, `Tag` |
 
 ---
 

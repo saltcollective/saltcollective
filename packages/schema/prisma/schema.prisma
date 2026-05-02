@@ -80,6 +80,8 @@ model Club {
 
   memberships  ClubMembership[]
   sponsorTiers SponsorTier[]
+  businesses   Business[]
+  tags         Tag[]
 }
 
 model SponsorTier {
@@ -91,7 +93,39 @@ model SponsorTier {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  club Club @relation(fields: [clubId], references: [id])
+  club       Club       @relation(fields: [clubId], references: [id])
+  businesses Business[]
 
   @@unique([clubId, order])
+}
+
+model Business {
+  id            String   @id @default(cuid())
+  clubId        String
+  sponsorTierId String
+  name          String
+  description   String
+  logoUrl       String?
+  phone         String?
+  email         String?
+  websiteUrl    String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  club        Club        @relation(fields: [clubId], references: [id])
+  sponsorTier SponsorTier @relation(fields: [sponsorTierId], references: [id])
+  tags        Tag[]
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  clubId    String
+  name      String
+  createdAt DateTime @default(now())
+
+  club       Club       @relation(fields: [clubId], references: [id])
+  businesses Business[]
+
+  @@unique([clubId, name])
 }
