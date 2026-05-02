@@ -7,19 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Platform-level role. Club-scoped roles live on ClubMembership.
 enum UserType {
   SITE_ADMIN
-  HUB_ADMIN
-  HUB_EDITOR
-  USER
+  MEMBER
+}
+
+enum ClubRole {
+  ADMIN
+  EDITOR
 }
 
 model User {
+  id            String    @id @default(cuid())
+  clerkId       String    @unique
+  username      String?   @unique
+  email         String    @unique
+  userType      UserType  @default(MEMBER)
+  isActive      Boolean   @default(true)
+  deactivatedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships    ClubMembership[]
+  impersonations ImpersonationLog[] @relation("Impersonator")
+  impersonatedBy ImpersonationLog[] @relation("Impersonated")
+}
+
+model ClubMembership {
   id        String   @id @default(cuid())
-  clerkId   String   @unique
-  username  String?  @unique
-  email     String   @unique
-  userType  UserType @default(USER)
+  userId    String
+  clubId    String
+  role      ClubRole
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  club Club @relation(fields: [clubId], references: [id])
+
+  @@unique([userId, clubId])
+}
+
+model ImpersonationLog {
+  id             String    @id @default(cuid())
+  impersonatorId String
+  impersonatedId String
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+
+  impersonator User @relation("Impersonator", fields: [impersonatorId], references: [id])
+  impersonated User @relation("Impersonated", fields: [impersonatedId], references: [id])
+}
+
+// Stub — to be fully modelled in the Club data model pass.
+model Club {
+  id          String           @id @default(cuid())
+  memberships ClubMembership[]
 }
