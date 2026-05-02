@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { Show, UserButton } from 'svelte-clerk';
-  import { Button, Container } from '@saltcollective/ui';
+  import { BrandLogo, Button, Container } from '@saltcollective/ui';
 
   const { children }: { children: Snippet } = $props();
 </script>
@@ -10,9 +10,8 @@
   <header class="header">
     <Container>
       <div class="headerInner">
-        <a href="/" class="logo">
-          <span class="logoMark">S</span>
-          Salt Collective
+        <a href="/" class="logo" aria-label="Salt Collective home">
+          <BrandLogo height={55} />
         </a>
         <nav class="nav" aria-label="Main">
           <a href="/#features" class="navLink">Features</a>
@@ -20,7 +19,6 @@
         </nav>
         <div class="actions">
           <Show when="signed-out">
-            <!-- TODO: link to Clerk sign-in page once route exists -->
             <Button variant="ghost" size="sm" href="/sign-in">Sign in</Button>
             <Button size="sm" href="/sign-up">Get started</Button>
           </Show>
@@ -68,32 +66,14 @@
   .headerInner {
     display: flex;
     align-items: center;
-    height: 64px;
+    height: 96px;
     gap: var(--space-8);
   }
 
   .logo {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    font-weight: 700;
-    font-size: var(--text-base);
-    color: var(--color-text);
     text-decoration: none;
-    flex-shrink: 0;
-  }
-
-  .logoMark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: var(--color-accent);
-    color: var(--color-accent-fg);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    font-weight: 800;
     flex-shrink: 0;
   }
 
@@ -106,6 +86,7 @@
   .navLink {
     font-size: var(--text-sm);
     color: var(--color-text-muted);
+    margin-top: 32px;
     text-decoration: none;
     transition: color 0.15s ease;
   }
@@ -118,6 +99,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
+    margin-top: 32px;
     margin-left: auto;
   }
 

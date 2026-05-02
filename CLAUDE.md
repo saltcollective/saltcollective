@@ -110,18 +110,59 @@ Operations requiring a tunnel (Studio, ad-hoc dev migrations) are invoked with t
 deno task --tunnel db:migrate
 ```
 
-## Auth
-Clerk via `clerk-sveltekit`. All auth logic lives in `apps/hub`. No auth-specific components belong in `packages/ui`.
 
 ## Adapter Note
 `@sveltejs/adapter-auto` is used. Deno Deploy is not in adapter-auto's platform detection list — it will fall back to `adapter-node`, which runs via Deno's Node.js compatibility mode. If platform-specific issues arise at deploy time, the escape hatch is switching to `@sveltejs/adapter-deno`.
+
+## File Storage (`apps/hub`)
+
+User-uploaded files (club logos, business logos) and static site assets are stored in AWS S3 (`saltcollective-uploads`, `ap-southeast-2`) and served via CloudFront (`d2hxbdf4sjiujo.cloudfront.net`).
+
+The server never handles file bytes directly. The upload flow:
+1. Client POSTs to `POST /api/upload` with `{ contentType, folder, id }`
+2. Server returns `{ uploadUrl, publicUrl }` — a presigned S3 PUT URL and the final CloudFront URL
+3. Client PUTs the file directly to S3 via the presigned URL
+4. Client saves the `publicUrl` to the relevant record (`Club.logoUrl` or `Business.logoUrl`)
+
+S3 utility: `apps/hub/src/lib/server/s3.ts`. Upload endpoint: `apps/hub/src/routes/api/upload/+server.ts`.
+
+Key structure:
+- `clubs/{clubId}/{timestamp}.{ext}` — club logos
+- `businesses/{businessId}/{timestamp}.{ext}` — business logos
+- `static/` — manually uploaded non-code static content
+
+All AWS env vars (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET`, `AWS_CLOUDFRONT_DOMAIN`) are set in the Deno Deploy dashboard. See `docs/infrastructure/file-storage.md` for full details.
+
+## Auth
+
+Clerk via `svelte-clerk`. All auth logic lives in `apps/hub`. No auth-specific components belong in `packages/ui`.
+
+- Sign-in page: `apps/hub/src/routes/sign-in/[...catchall]/+page.svelte`
+- Sign-up page: `apps/hub/src/routes/sign-up/[...catchall]/+page.svelte`
+- Sign-in/sign-up URLs are configured on `<ClerkProvider>` in the root `+layout.svelte`
+- `locals.user` is populated by `hooks.server.ts` for every authenticated request — use this for auth checks in server routes and load functions
 
 ## Deno Deploy Constraints
 - No filesystem access at runtime
 - No direct TCP database connections — Prisma Postgres uses HTTP via Accelerate, which works here
 - No persistent in-memory state between requests
 - npm packages that rely on native Node bindings will not work
-- Environment variables are set in the Deno Deploy dashboard (`.env` locally)
+- **Environment variables come from the Deno Deploy dashboard, injected locally via `--tunnel`. Do not create `.env` files.**
 
 ## Development
-TODO: populate with commands once scaffolded.
+
+```sh
+# Start dev server (env vars injected via Deno Deploy tunnel)
+deno task --tunnel dev
+
+# Sync schema changes to DB during active modelling (no migration files created)
+deno task db:push
+
+# Generate a migration file when ready to ship a schema change to production
+deno task --tunnel db:migrate
+
+# Reset dev DB and regenerate migrations (use when db:push and migration history have drifted)
+deno task --tunnel db:migrate:reset
+```
+
+Deployments push to `main` and trigger automatically. The deploy hook runs `prisma generate` then `prisma migrate deploy`. A migration file must exist before deploying schema changes — see README for the full workflow.

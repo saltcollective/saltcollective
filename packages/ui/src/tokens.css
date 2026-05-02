@@ -1,3 +1,22 @@
+/* ============================================================
+   Salt Collective — Design Tokens
+   ============================================================ */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/InterVariable.woff2') format('woff2-variations');
+}
+
+/* ============================================================
+   THEME TOKENS
+   Dark is the default. Light activates via:
+     - [data-theme="light"] on <html> or any ancestor
+     - prefers-color-scheme: light (when no data-theme is set)
+   ============================================================ */
+
 :root {
   --color-bg: #0d0d0f;
   --color-surface: #17171a;
@@ -12,6 +31,36 @@
   --color-success: #4caf82;
   --color-warning: #e0a04a;
 
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #ffffff;
+    --color-surface: #f7f7f8;
+    --color-surface-2: #ffffff;
+    --color-border: #e4e4e8;
+    --color-text: #0d0d0f;
+    --color-text-muted: #6b6b75;
+    --color-accent: #1f8fd6;
+    --color-accent-fg: #ffffff;
+    --color-destructive: #c94545;
+    --color-destructive-fg: #ffffff;
+    --color-success: #2f8d62;
+    --color-warning: #b07628;
+
+    --shadow-sm: 0 1px 2px 0 rgb(15 15 25 / 0.06);
+    --shadow-md: 0 6px 18px -4px rgb(15 15 25 / 0.1);
+  }
+}
+
+/* ============================================================
+   NON-THEME TOKENS (spacing, type, radii)
+   ============================================================ */
+
+:root {
+  /* ---------- Spacing ---------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -22,6 +71,7 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
 
+  /* ---------- Type ---------- */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -32,11 +82,16 @@
   --leading-tight: 1.25;
   --leading-normal: 1.5;
 
+  /* Fluid display type */
+  --display-hero: clamp(2.25rem, 6vw, 3.75rem);
+  --display-section: clamp(1.5rem, 4vw, 2.25rem);
+  --tracking-display: -0.03em;
+  --tracking-section: -0.02em;
+  --tracking-eyebrow: 0.1em;
+
+  /* ---------- Radii ---------- */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-full: 9999px;
-
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.6);
 }
