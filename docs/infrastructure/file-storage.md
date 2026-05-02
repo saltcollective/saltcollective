@@ -49,13 +49,19 @@ AWS_CLOUDFRONT_DOMAIN=
 
 Set in the Deno Deploy dashboard. Locally, env vars are injected via the Deno Deploy tunnel (`deno task --tunnel dev`) — no local `.env` file.
 
-## `logoUrl` convention
+## Key structure
 
-All `logoUrl` fields in the database store the full CloudFront URL, e.g.:
-```
-https://d1234abcd.cloudfront.net/clubs/abc123/logo.png
-```
+All files are served via CloudFront at `https://d2hxbdf4sjiujo.cloudfront.net/{key}`.
 
-Suggested key structure:
-- Club logos: `clubs/{clubId}/{filename}`
-- Business logos: `businesses/{businessId}/{filename}`
+| Prefix | Contents |
+|---|---|
+| `clubs/{clubId}/` | Club logo uploads |
+| `businesses/{businessId}/` | Business logo uploads |
+| `static/` | Non-code static content (marketing images, icons, PDFs, etc.) |
+
+User-uploaded keys include a timestamp (`{folder}/{id}/{timestamp}.{ext}`) to bust CloudFront cache when a logo is replaced.
+
+Static files are uploaded manually via the CLI:
+```sh
+aws --profile salt s3 cp ./file.png s3://saltcollective-uploads/static/file.png --content-type image/png
+```
