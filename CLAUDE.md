@@ -31,6 +31,8 @@ Root `deno.json` declares workspaces and Deno-level lint/fmt rules. Each workspa
 | Auth | Clerk via `clerk-sveltekit` |
 | Database | Prisma Postgres (Prisma's managed serverless Postgres) |
 | ORM | Prisma with Accelerate extension (edge-compatible) |
+| File storage | AWS S3 |
+| CDN | AWS CloudFront (serves S3 assets) |
 | Styling | CSS modules — **no Tailwind** |
 
 ## Key Conventions

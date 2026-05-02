@@ -962,6 +962,8 @@
       "apps/hub": {
         "packageJson": {
           "dependencies": [
+            "npm:@aws-sdk/client-s3@^3.1041.0",
+            "npm:@aws-sdk/s3-request-presigner@^3.1041.0",
             "npm:@saltcollective/schema@*",
             "npm:@saltcollective/ui@*",
             "npm:@sveltejs/adapter-auto@3",

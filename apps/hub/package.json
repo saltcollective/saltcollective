@@ -10,15 +10,17 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "svelte-clerk": "^1.1.5",
+    "@aws-sdk/client-s3": "^3.1041.0",
+    "@aws-sdk/s3-request-presigner": "^3.1041.0",
+    "@saltcollective/schema": "*",
     "@saltcollective/ui": "*",
-    "@saltcollective/schema": "*"
+    "svelte-clerk": "^1.1.5"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",
-    "prisma": "^6.0.0",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "prisma": "^6.0.0",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
     "typescript": "^5.0.0",
