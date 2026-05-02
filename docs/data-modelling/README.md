@@ -7,6 +7,7 @@ Prisma schema lives in `packages/schema/prisma/schema.prisma`. Each model is doc
 | File | Models |
 |---|---|
 | [user.md](user.md) | `User`, `ClubMembership`, `ImpersonationLog` |
+| [club.md](club.md) | `Club` |
 
 ---
 

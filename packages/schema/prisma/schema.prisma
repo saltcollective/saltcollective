@@ -58,8 +58,25 @@ model ImpersonationLog {
   impersonated User @relation("Impersonated", fields: [impersonatedId], references: [id])
 }
 
-// Stub — to be fully modelled in the Club data model pass.
+enum ClubStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 model Club {
-  id          String           @id @default(cuid())
+  id               String     @id @default(cuid())
+  name             String
+  slug             String     @unique
+  tagline          String?
+  logoUrl          String?
+  primaryColour    String?
+  secondaryColour  String?
+  headingColour    String?
+  status           ClubStatus @default(ACTIVE)
+  publishedAt      DateTime?
+  stripeCustomerId String?    @unique
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
   memberships ClubMembership[]
 }
