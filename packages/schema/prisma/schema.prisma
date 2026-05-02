@@ -78,5 +78,20 @@ model Club {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
-  memberships ClubMembership[]
+  memberships  ClubMembership[]
+  sponsorTiers SponsorTier[]
+}
+
+model SponsorTier {
+  id        String   @id @default(cuid())
+  clubId    String
+  name      String
+  order     Int
+  price     Decimal? @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  club Club @relation(fields: [clubId], references: [id])
+
+  @@unique([clubId, order])
 }
