@@ -50,19 +50,27 @@ Root `deno.json` declares workspaces and Deno-level lint/fmt rules. Each workspa
 #### Design tokens
 CSS custom properties defined in `packages/ui/src/tokens.css`, imported once in the root `+layout.svelte`. All component styles reference these variables — no hardcoded values.
 
+Dark theme is the default (`:root`). Light theme activates automatically via `@media (prefers-color-scheme: light)` — no JavaScript, no class toggling.
+
+Static assets (`apps/hub/static/`):
+- `fonts/InterVariable.woff2` — Inter variable font, preloaded in `app.html`
+- Brand logos are served from CloudFront: `https://d2hxbdf4sjiujo.cloudfront.net/static/logo-dark.svg` and `logo-light.svg`. Use `BrandLogo.svelte` — it selects the correct variant via `<picture>` + `prefers-color-scheme`.
+
 #### Layout system
 - `Container.svelte` — max-width 1200px, centered, with horizontal padding. Use as a section wrapper.
 - `Grid.svelte` — CSS Grid primitive. For responsive layouts, define grid rules in each page/component's own `<style>` block.
-- Route group layouts (`(marketing)/+layout.svelte`, `(app)/+layout.svelte`, etc.) define page shells — nav, footer, sidebars.
+- Route group layouts (`(marketing)/+layout.svelte`, `(app)/+layout.svelte`) define page shells — nav, footer, sidebars.
 
 #### Current atoms (`packages/ui/src/lib/`)
 
 | Component | Description |
 |---|---|
+| `BrandLogo.svelte` | `<picture>` element serving CloudFront SVGs, switching dark/light via `prefers-color-scheme`. Prop: `height` (px). |
 | `Button.svelte` | Native `button`/`a` element. Props: `variant` (`primary`\|`secondary`\|`ghost`\|`destructive`), `size` (`sm`\|`md`\|`lg`), `href` (renders anchor), `disabled`. All other attrs spread through. |
 | `Label.svelte` | Native `label`. Prop: `required` (adds asterisk via CSS `::after`). Pass `for` via spread. |
 | `Input.svelte` | Compound input — optional `label` string renders a `Label` above, optional `error` string renders message below with red border. `value` is `$bindable`. |
 | `Badge.svelte` | Pure CSS status chip. Prop: `variant` (`default`\|`success`\|`warning`\|`destructive`). |
+| `Stat.svelte` | Stat card — eyebrow label + large numeric value. Props: `label`, `value`. |
 | `Grid.svelte` | CSS Grid layout primitive. Props: `cols` (number → `repeat(n,1fr)` or raw CSS string), `gap`, `rowGap`, `colGap`, `as` (polymorphic element tag). |
 | `Container.svelte` | Max-width 1200px centered container. Props: `as` (element tag), `class`. |
 
@@ -132,6 +140,57 @@ Key structure:
 - `static/` — manually uploaded non-code static content
 
 All AWS env vars (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET`, `AWS_CLOUDFRONT_DOMAIN`) are set in the Deno Deploy dashboard. See `docs/infrastructure/file-storage.md` for full details.
+
+## Hub Admin App (`apps/hub/src/routes/(app)/`)
+
+Post-auth club admin interface. The `(app)` route group provides the hub shell — sidebar + main — and guards all child routes.
+
+### Access control
+
+The `(app)` group is restricted to authenticated users who have at least one `ClubMembership`. The layout server enforces this and passes `{ club, role }` down to every child page.
+
+**Who can access:**
+- Any user with a `ClubMembership` (`ADMIN` or `EDITOR` role)
+- `UserType.SITE_ADMIN` users (platform-level admins) — not yet explicitly handled; currently they must also have a `ClubMembership` to enter the hub
+
+**`ClubRole` permissions (convention, not yet fully enforced in code):**
+- `ADMIN` — full access: sponsors, tiers, analytics, embed, settings
+- `EDITOR` — can add/edit businesses; should not access tiers or settings screens
+
+Role-based guards on individual screens are not yet built. When adding a restricted screen (e.g. settings), check `role` from the parent layout data and throw `error(403)` if the user's role is insufficient:
+```typescript
+// In a page's +page.server.ts
+const { role } = await parent();
+if (role !== 'ADMIN') error(403, 'Admin access required');
+```
+
+### Data scoping
+
+Every page load calls `await parent()` to get `{ club, role }` from the layout server. **All Prisma queries in `(app)` pages must filter by `clubId: club.id`** — never query across clubs. The layout guarantees the club belongs to the signed-in user.
+
+### Shell
+- `(app)/+layout.server.ts` — redirects unauthenticated users to `/sign-in`; redirects users with no `ClubMembership` to `/` (onboarding not yet built); passes `{ club, role }` to all child pages
+- `(app)/+layout.svelte` — 240px sidebar + 1fr main on desktop; collapses to a sticky mobile bar + slide-in drawer on ≤820px
+
+### Hub-specific components (`apps/hub/src/lib/components/`)
+These are hub-specific and do not belong in `packages/ui`:
+
+| Component | Description |
+|---|---|
+| `Sidebar.svelte` | Nav (Dashboard → Settings), club mark + name in footer, slide-in drawer on mobile. Props: `club`, `activeRoute`, `open`, `onClose`. |
+| `PageHeader.svelte` | Page title + optional subtitle + optional `{#snippet action()}` slot. Used at the top of every hub screen. |
+
+### Screens built
+- `dashboard/` — four `Stat` cards (total, active, inactive, views this month) + recent sponsors list
+- `sponsors/` — tier filter chips + business table; reflowed to card rows on mobile; Edit links to `/sponsors/{id}/edit`
+
+### Screens not yet built
+- `sponsors/new` — add sponsor form
+- `sponsors/[id]/edit` — edit sponsor form
+- `tiers/` — sponsor tier management
+- `analytics/` — click event reporting
+- `embed/` — embed code / shareable link
+- `settings/` — club settings
 
 ## Auth
 

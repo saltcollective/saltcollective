@@ -86,7 +86,7 @@
   .navLink {
     font-size: var(--text-sm);
     color: var(--color-text-muted);
-    margin-top: 32px;
+    margin-top: 40px;
     text-decoration: none;
     transition: color 0.15s ease;
   }
@@ -99,7 +99,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    margin-top: 32px;
+    margin-top: 40px;
     margin-left: auto;
   }
 
