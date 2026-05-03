@@ -3,6 +3,7 @@
 
   interface Club {
     name: string;
+    slug: string;
     logoUrl?: string | null;
   }
 
@@ -54,6 +55,17 @@
   </nav>
 
   <div class="footer">
+    <a
+      href="/{club.slug}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="viewHub"
+      onclick={onClose}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      View public hub
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+    </a>
     <div class="club">
       <div class="clubMark">{initial}</div>
       <div>
@@ -118,6 +130,32 @@
   .footer {
     border-top: 1px solid var(--color-border);
     padding-top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .viewHub {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .viewHub:hover {
+    color: var(--color-accent);
+    background: var(--color-surface-2);
+  }
+
+  .viewHub svg:last-child {
+    margin-left: auto;
+    opacity: 0.5;
   }
 
   .club {

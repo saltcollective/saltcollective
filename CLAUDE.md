@@ -96,6 +96,26 @@ Static assets (`apps/hub/static/`):
 - Pure markdown only — no framework, no build step
 - Human-readable source; no tooling assumptions
 
+## Database Environment Variables
+
+Two separate env vars are required — Deno Deploy automatically injects `DATABASE_URL` as the direct PostgreSQL connection string and this cannot be overridden:
+
+| Variable | Value | Used by |
+|---|---|---|
+| `DATABASE_URL` | `postgresql://...` — set automatically by Deno Deploy | Prisma migrations (`db:push`, `db:migrate`), also used as `directUrl` in `schema.prisma` |
+| `PRISMA_URL` | `prisma+postgres://...` — Prisma Accelerate connection string, set manually in Deno Deploy dashboard | App at runtime (`packages/schema/src/index.ts` reads this via `process.env.PRISMA_URL`) |
+
+The schema reflects this split:
+```prisma
+datasource db {
+  provider  = "postgresql"
+  url       = env("PRISMA_URL")    // Accelerate — used by the app
+  directUrl = env("DATABASE_URL")  // Direct Postgres — used by migrations
+}
+```
+
+`PRISMA_URL` must be set manually in the Deno Deploy dashboard. It is injected locally via `--tunnel` alongside `DATABASE_URL`.
+
 ## Database Scripts
 
 Defined in `packages/schema/deno.json`. All operations connect to Prisma Postgres remotely — there is no local DB to spin up.
@@ -220,6 +240,20 @@ Clerk via `svelte-clerk`. All auth logic lives in `apps/hub`. No auth-specific c
 - Sign-up page: `apps/hub/src/routes/sign-up/[...catchall]/+page.svelte`
 - Sign-in/sign-up URLs are configured on `<ClerkProvider>` in the root `+layout.svelte`
 - `locals.user` is populated by `hooks.server.ts` for every authenticated request — use this for auth checks in server routes and load functions
+
+## Known performance issue — sequential DB round-trips
+
+Every `(app)` page server calls `await parent()` to get `club.id`, which means page queries cannot start until the layout's `clubMembership.findFirst` completes. This causes two sequential Prisma Accelerate round-trips on every dashboard page load.
+
+**To fix:** refactor high-traffic page servers (starting with `dashboard/+page.server.ts` and `dashboard/sponsors/+page.server.ts`) to do their own scoped membership lookup in parallel with their data queries, rather than blocking on `parent()`. The layout can keep its own lookup for the shell — the duplication is cheaper than the sequential wait.
+
+Monitor first; only invest in this if page load times remain noticeable after Prisma plan upgrade.
+
+## Streaming / deferred data (pending Deno Deploy upgrade)
+
+SvelteKit supports returning unawaited `Promise`s from `load` functions so the page renders immediately and slow data streams in, handled client-side with `{#await}`. This requires Deno Deploy Pro or above for chunked streaming responses.
+
+**Once the Deno Deploy plan is upgraded:** apply streaming to the dashboard overview (stream recent sponsors list, render stat card shells immediately) and the sponsors list (stream table rows). The public hub page tier grids are also a good candidate. Pattern: await only the minimum data needed to render the page shell; return everything else as an unawaited promise.
 
 ## Deno Deploy Constraints
 - No filesystem access at runtime

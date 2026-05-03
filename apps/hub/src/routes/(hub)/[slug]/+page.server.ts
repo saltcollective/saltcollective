@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, setHeaders }) => {
   const club = await prisma.club.findUnique({
     where: { slug: params.slug },
     select: {
@@ -15,6 +15,7 @@ export const load: PageServerLoad = async ({ params }) => {
       secondaryColour: true,
       publishedAt: true,
     },
+    cacheStrategy: { ttl: 60, swr: 300 },
   });
 
   if (!club || !club.publishedAt) error(404, 'Hub not found');
@@ -39,7 +40,10 @@ export const load: PageServerLoad = async ({ params }) => {
         },
       },
     },
+    cacheStrategy: { ttl: 60, swr: 300 },
   });
+
+  setHeaders({ 'cache-control': 'public, max-age=60, stale-while-revalidate=300' });
 
   return {
     club,

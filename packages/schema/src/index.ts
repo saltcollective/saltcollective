@@ -1,25 +1,21 @@
+import process from 'node:process';
 import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
-const { Pool } = pg;
+import { withAccelerate } from '@prisma/extension-accelerate';
 
-type Client = InstanceType<typeof PrismaClient>;
-
-const globalForPrisma = globalThis as unknown as { prisma: Client | undefined };
-
-function createPrismaClient(): Client {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('DATABASE_URL is required');
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter });
+function createPrismaClient() {
+  const datasourceUrl = process.env.PRISMA_URL;
+  if (!datasourceUrl) throw new Error('PRISMA_URL is not set');
+  return new PrismaClient({ datasourceUrl }).$extends(withAccelerate());
 }
 
-export const prisma = new Proxy({} as Client, {
+type ExtendedClient = ReturnType<typeof createPrismaClient>;
+const globalForPrisma = globalThis as unknown as { prisma: ExtendedClient | undefined };
+
+export const prisma = new Proxy({} as ExtendedClient, {
   get(_, prop) {
     globalForPrisma.prisma ??= createPrismaClient();
-    return Reflect.get(globalForPrisma.prisma, prop);
+    return Reflect.get(globalForPrisma.prisma as object, prop);
   },
 });
 
