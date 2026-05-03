@@ -7,16 +7,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
   const membership = await prisma.clubMembership.findFirst({
     where: { userId: locals.user.id },
-    select: {
-      role: true,
-      club: {
-        select: { id: true, name: true, slug: true, logoUrl: true },
-      },
-    },
-    orderBy: { createdAt: 'asc' },
+    select: { club: { select: { publishedAt: true } } },
   });
 
-  if (!membership) redirect(302, '/onboarding/club');
+  if (membership?.club.publishedAt) redirect(302, '/dashboard');
 
-  return { club: membership.club, role: membership.role };
+  return {};
 };

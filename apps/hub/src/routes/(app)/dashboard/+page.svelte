@@ -22,11 +22,11 @@
   <section class="card">
     <header class="cardHeader">
       <h2 class="cardTitle">Recent sponsors</h2>
-      <a href="/sponsors" class="cardLink">View all</a>
+      <a href="/dashboard/sponsors" class="cardLink">View all</a>
     </header>
 
     {#if data.recent.length === 0}
-      <p class="empty">No sponsors yet. <a href="/sponsors">Add your first one.</a></p>
+      <p class="empty">No sponsors yet. <a href="/dashboard/sponsors">Add your first one.</a></p>
     {:else}
       <ul class="list">
         {#each data.recent as business}

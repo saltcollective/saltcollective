@@ -6,7 +6,7 @@
   const { children }: { children: Snippet } = $props();
 </script>
 
-<ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
+<ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up" afterSignUpUrl="/onboarding/club">
   {@render children()}
 </ClerkProvider>
 

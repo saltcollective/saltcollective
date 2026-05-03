@@ -31,6 +31,7 @@
 
 - Club management (Must)
 - User management (Should)
+- Discount codes (Should) — create single-use access codes for onboarding payment bypass
 - Billing (Could - depends on how much is surfaceable from Stripe and whether necessary)
 - Analytics overview (Could)
 - Impersonate user (Could)

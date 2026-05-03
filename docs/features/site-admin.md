@@ -29,13 +29,14 @@ As the platform operator, we need to onboard clubs, resolve issues on their beha
 
 ## Child Features
 
-| Feature                                          | Priority | Status  |
-| ------------------------------------------------ | -------- | ------- |
-| [Club management](site-admin-club-management.md) | Must     | Backlog |
-| [User management](site-admin-user-management.md) | Should   | Backlog |
-| [Billing](site-admin-billing.md)                 | Could    | Backlog |
-| [Analytics overview](site-admin-analytics.md)    | Could    | Backlog |
-| [Impersonate user](site-admin-impersonate.md)    | Could    | Backlog |
+| Feature                                                  | Priority | Status  |
+| -------------------------------------------------------- | -------- | ------- |
+| [Club management](site-admin-club-management.md)         | Must     | Backlog |
+| [User management](site-admin-user-management.md)         | Should   | Backlog |
+| [Discount codes](site-admin-discount-codes.md)           | Should   | Draft   |
+| [Billing](site-admin-billing.md)                         | Could    | Backlog |
+| [Analytics overview](site-admin-analytics.md)            | Could    | Backlog |
+| [Impersonate user](site-admin-impersonate.md)            | Could    | Backlog |
 
 ## User Stories
 

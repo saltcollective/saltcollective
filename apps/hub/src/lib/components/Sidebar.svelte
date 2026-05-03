@@ -16,12 +16,12 @@
   let { club, activeRoute, open, onClose }: Props = $props();
 
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/sponsors', label: 'Sponsors' },
-    { href: '/tiers', label: 'Tiers' },
-    { href: '/analytics', label: 'Analytics' },
-    { href: '/embed', label: 'Embed' },
-    { href: '/settings', label: 'Settings' },
+    { href: '/dashboard',           label: 'Dashboard', exact: true },
+    { href: '/dashboard/sponsors',  label: 'Sponsors' },
+    { href: '/dashboard/tiers',     label: 'Tiers' },
+    { href: '/dashboard/analytics', label: 'Analytics' },
+    { href: '/dashboard/embed',     label: 'Embed' },
+    { href: '/dashboard/settings',  label: 'Settings' },
   ];
 
   const initial = $derived(club.name[0]?.toUpperCase() ?? '?');
@@ -45,7 +45,7 @@
       <a
         href={item.href}
         class="navItem"
-        class:active={activeRoute === item.href || activeRoute.startsWith(item.href + '/')}
+        class:active={item.exact ? activeRoute === item.href : activeRoute === item.href || activeRoute.startsWith(item.href + '/')}
         onclick={onClose}
       >
         {item.label}

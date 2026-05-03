@@ -1,0 +1,159 @@
+/* Shared styles for onboarding step pages — side-effect imported in onboarding layout */
+
+.ob-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.ob-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ob-title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.ob-sub {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+  margin: 0;
+}
+
+.ob-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ob-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ob-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.ob-label-opt {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  margin-left: var(--space-1);
+}
+
+.ob-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  line-height: var(--leading-normal);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.ob-input::placeholder { color: var(--color-text-muted); }
+
+.ob-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.ob-input.has-error {
+  border-color: var(--color-destructive);
+}
+
+.ob-input.has-error:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-destructive) 20%, transparent);
+}
+
+.ob-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.ob-error {
+  font-size: var(--text-xs);
+  color: var(--color-destructive);
+}
+
+.ob-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.ob-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  text-decoration: none;
+  border: none;
+  box-sizing: border-box;
+}
+
+.ob-btn-primary {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+
+.ob-btn-primary:hover:not(:disabled) { opacity: 0.88; }
+
+.ob-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ob-btn-ghost {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.ob-btn-ghost:hover { background: var(--color-surface-2); }
+
+.ob-skip {
+  display: block;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: var(--space-2);
+}
+
+.ob-skip:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.ob-form-error {
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--color-destructive) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-destructive) 30%, transparent);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-destructive);
+}

@@ -20,7 +20,7 @@
     subtitle="Manage the businesses listed on your hub."
   >
     {#snippet action()}
-      <Button size="sm" href="/sponsors/new">Add sponsor</Button>
+      <Button size="sm" href="/dashboard/sponsors/new">Add sponsor</Button>
     {/snippet}
   </PageHeader>
 
@@ -72,7 +72,7 @@
                 </Badge>
               </td>
               <td class="actionCell">
-                <Button variant="ghost" size="sm" href="/sponsors/{business.id}/edit">Edit</Button>
+                <Button variant="ghost" size="sm" href="/dashboard/sponsors/{business.id}/edit">Edit</Button>
               </td>
             </tr>
           {/each}

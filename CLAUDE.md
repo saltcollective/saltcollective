@@ -169,7 +169,7 @@ if (role !== 'ADMIN') error(403, 'Admin access required');
 Every page load calls `await parent()` to get `{ club, role }` from the layout server. **All Prisma queries in `(app)` pages must filter by `clubId: club.id`** — never query across clubs. The layout guarantees the club belongs to the signed-in user.
 
 ### Shell
-- `(app)/+layout.server.ts` — redirects unauthenticated users to `/sign-in`; redirects users with no `ClubMembership` to `/` (onboarding not yet built); passes `{ club, role }` to all child pages
+- `(app)/+layout.server.ts` — redirects unauthenticated users to `/sign-in`; redirects users with no `ClubMembership` to `/onboarding/club`; passes `{ club, role }` to all child pages
 - `(app)/+layout.svelte` — 240px sidebar + 1fr main on desktop; collapses to a sticky mobile bar + slide-in drawer on ≤820px
 
 ### Hub-specific components (`apps/hub/src/lib/components/`)
@@ -180,17 +180,37 @@ These are hub-specific and do not belong in `packages/ui`:
 | `Sidebar.svelte` | Nav (Dashboard → Settings), club mark + name in footer, slide-in drawer on mobile. Props: `club`, `activeRoute`, `open`, `onClose`. |
 | `PageHeader.svelte` | Page title + optional subtitle + optional `{#snippet action()}` slot. Used at the top of every hub screen. |
 
+Full spec (current state, screen designs, to-do list): [`hub-dashboard.md`](hub-dashboard.md).
+
 ### Screens built
 - `dashboard/` — four `Stat` cards (total, active, inactive, views this month) + recent sponsors list
-- `sponsors/` — tier filter chips + business table; reflowed to card rows on mobile; Edit links to `/sponsors/{id}/edit`
+- `dashboard/sponsors/` — tier filter chips + business table; reflowed to card rows on mobile; Edit links to `/dashboard/sponsors/{id}/edit`
 
 ### Screens not yet built
-- `sponsors/new` — add sponsor form
-- `sponsors/[id]/edit` — edit sponsor form
-- `tiers/` — sponsor tier management
-- `analytics/` — click event reporting
-- `embed/` — embed code / shareable link
-- `settings/` — club settings
+- `dashboard/sponsors/new` — add sponsor form
+- `dashboard/sponsors/[id]/edit` — edit sponsor form
+- `dashboard/tiers/` — sponsor tier management
+- `dashboard/analytics/` — click event reporting
+- `dashboard/embed/` — embed code + shareable public hub link
+- `dashboard/settings/` — club settings (name, slug, tagline, colours, logo, danger zone)
+
+### Public hub page
+- `(hub)/[slug]/` — public-facing sponsor listing page (not yet built); spec in [`hub-dashboard.md`](hub-dashboard.md)
+
+## Onboarding (`apps/hub/src/routes/onboarding/`)
+
+Multi-step wizard taking a new user from sign-up to a live club hub. Full spec: [`onboarding.md`](onboarding.md).
+
+**Route:** `/onboarding/*` — 5 steps: club details → branding → tiers → payment (stub) → done.
+
+**Status:** Implementation complete (untested end-to-end).
+
+**Key behaviour:**
+- Step 1 creates `Club` + `ClubMembership(ADMIN)`. Steps 2–4 update via `?club=<clubId>` URL param.
+- Done step sets `Club.publishedAt` — the club goes live immediately.
+- `(app)` layout redirects users with no membership to `/onboarding/club` (not `/`).
+- Onboarding layout redirects users who already have a published club to `/dashboard`.
+- Slug uniqueness checked via `GET /api/slug-available?slug=xxx`.
 
 ## Auth
 
