@@ -1,36 +1,42 @@
 <script lang="ts">
   import { Button, Container } from '@saltcollective/ui';
 
-  const features = [
+  const features: { n: string; title: string; desc: string; cta: string | null }[] = [
     {
       n: '01',
       title: 'One tidy directory',
       desc: "Every sponsor in one place — tiers, logos, links, the works. Members find who they're looking for in two taps.",
+      cta: null,
     },
     {
       n: '02',
       title: 'Drag, drop, done',
       desc: 'Re-tier a sponsor on your phone between meetings. Your hub updates the moment you do — no deploys, no fuss.',
+      cta: null,
     },
     {
       n: '03',
       title: 'Embed it anywhere',
       desc: 'Drop it into your existing club site with one line, or send the link to your members. Both work the same.',
+      cta: null,
     },
     {
       n: '04',
       title: 'Honest pricing',
       desc: 'One tier. One price. No upsells, no "contact us for enterprise". You always know what you\'re paying.',
+      cta: null,
     },
     {
       n: '05',
       title: 'Quiet, useful analytics',
       desc: "Which sponsors get clicked? Which tiers earn their keep? Just enough numbers to make next year's pitch.",
+      cta: null,
     },
     {
       n: '06',
       title: 'Real people, quick replies',
       desc: 'Stuck on something? Email us. A human writes back, usually same day, often within the hour.',
+      cta: null,
     },
   ];
 
@@ -1006,23 +1012,6 @@
     top: -18px;
     left: 50%;
     transform: translateX(-50%) rotate(-3deg);
-  }
-
-  .price-card .stamp {
-    position: absolute;
-    top: 12px;
-    right: -10px;
-    font-family: ui-serif, Georgia, serif;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    font-size: 11px;
-    color: var(--pin);
-    border: 2px solid var(--pin);
-    border-radius: 4px;
-    padding: 4px 10px;
-    transform: rotate(8deg);
-    background: color-mix(in srgb, var(--paper-card) 70%, transparent);
-    text-transform: uppercase;
   }
 
   .price-eyebrow {
