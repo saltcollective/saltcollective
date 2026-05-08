@@ -6,4 +6,9 @@ export default defineConfig({
   ssr: {
     external: ['@prisma/client', '@prisma/extension-accelerate'],
   },
+  build: {
+    rollupOptions: {
+      external: ['@prisma/client', '@prisma/extension-accelerate'],
+    },
+  },
 });
