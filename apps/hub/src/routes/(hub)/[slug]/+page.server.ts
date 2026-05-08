@@ -13,6 +13,8 @@ export const load: PageServerLoad = async ({ params, setHeaders }) => {
       logoUrl: true,
       primaryColour: true,
       secondaryColour: true,
+      backgroundColour: true,
+      colorScheme: true,
       publishedAt: true,
     },
     cacheStrategy: { ttl: 60, swr: 300 },

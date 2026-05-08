@@ -11,6 +11,7 @@ export const load: PageServerLoad = async ({ parent }) => {
     select: {
       id: true, name: true, slug: true, tagline: true,
       logoUrl: true, primaryColour: true, secondaryColour: true,
+      backgroundColour: true, colorScheme: true,
     },
   });
 
@@ -65,8 +66,11 @@ export const actions: Actions = {
     const logoUrl = (fd.get('logoUrl') as string)?.trim() || null;
     const primaryColour = (fd.get('primaryColour') as string)?.trim() || null;
     const secondaryColour = (fd.get('secondaryColour') as string)?.trim() || null;
+    const backgroundColour = (fd.get('backgroundColour') as string)?.trim() || null;
+    const rawScheme = (fd.get('colorScheme') as string)?.trim();
+    const colorScheme = rawScheme === 'LIGHT' || rawScheme === 'DARK' || rawScheme === 'SYSTEM' ? rawScheme : 'SYSTEM';
 
-    await prisma.club.update({ where: { id: clubId }, data: { logoUrl, primaryColour, secondaryColour } });
+    await prisma.club.update({ where: { id: clubId }, data: { logoUrl, primaryColour, secondaryColour, backgroundColour, colorScheme } });
     return { updated: 'branding' as const, success: true };
   },
 

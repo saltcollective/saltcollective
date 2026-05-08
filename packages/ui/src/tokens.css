@@ -59,6 +59,50 @@
 }
 
 /* ============================================================
+   EXPLICIT THEME OVERRIDES (data-theme attribute)
+   Applied to a specific element to force a theme regardless of
+   the visitor's OS preference. Used by the public hub page.
+   ============================================================ */
+
+[data-theme="dark"] {
+  --color-bg: #2a2a2e;
+  --color-surface: #34343a;
+  --color-surface-2: #3c3c40;
+  --color-border: #4a4a50;
+  --color-text: #f0ece4;
+  --color-text-muted: #9a9690;
+  --color-accent: #68b7d2;
+  --color-accent-fg: #0d0d0f;
+  --color-accent-2: #f4a27e;
+  --color-accent-2-fg: #0d0d0f;
+  --color-destructive: #e05252;
+  --color-destructive-fg: #fff;
+  --color-success: #4caf82;
+  --color-warning: #e0a04a;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.6);
+}
+
+[data-theme="light"] {
+  --color-bg: #faf6f0;
+  --color-surface: #f3ecdf;
+  --color-surface-2: #fffaf2;
+  --color-border: #e0d8c8;
+  --color-text: #1a1a1f;
+  --color-text-muted: #6b6358;
+  --color-accent: #3f8fa8;
+  --color-accent-fg: #ffffff;
+  --color-accent-2: #d97a4f;
+  --color-accent-2-fg: #ffffff;
+  --color-destructive: #c94545;
+  --color-destructive-fg: #ffffff;
+  --color-success: #2f8d62;
+  --color-warning: #b07628;
+  --shadow-sm: 0 1px 2px 0 rgb(15 15 25 / 0.06);
+  --shadow-md: 0 6px 18px -4px rgb(15 15 25 / 0.1);
+}
+
+/* ============================================================
    NON-THEME TOKENS (spacing, type, radii)
    ============================================================ */
 

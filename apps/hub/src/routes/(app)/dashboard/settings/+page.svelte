@@ -18,6 +18,8 @@
   let logoUrl = $state(data.club.logoUrl ?? '');
   let primaryColour = $state(data.club.primaryColour ?? '#68b7d2');
   let secondaryColour = $state(data.club.secondaryColour ?? '#f4a27e');
+  let backgroundColour = $state(data.club.backgroundColour ?? '');
+  let colorScheme = $state<'SYSTEM' | 'LIGHT' | 'DARK'>(data.club.colorScheme ?? 'SYSTEM');
   let uploading = $state(false);
   let uploadError = $state('');
   let submittingBranding = $state(false);
@@ -27,14 +29,19 @@
   let deleting = $state(false);
 
   async function checkSlug() {
-    if (!slug || slug === data.club.slug) { slugAvailable = null; return; }
+    if (!slug || slug === data.club.slug) {
+      slugAvailable = null;
+      return;
+    }
     if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug) || slug.length < 2) {
       slugAvailable = false;
       return;
     }
     slugChecking = true;
     try {
-      const res = await fetch(`/api/slug-available?slug=${encodeURIComponent(slug)}&excludeId=${data.club.id}`);
+      const res = await fetch(
+        `/api/slug-available?slug=${encodeURIComponent(slug)}&excludeId=${data.club.id}`
+      );
       const json = await res.json();
       slugAvailable = json.available;
     } catch {
@@ -45,15 +52,22 @@
   }
 
   function toSlug(value: string) {
-    return value.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '').trim()
-      .replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 60);
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 60);
   }
 
   async function handleLogoChange(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { uploadError = 'File must be under 2 MB'; return; }
+    if (file.size > 2 * 1024 * 1024) {
+      uploadError = 'File must be under 2 MB';
+      return;
+    }
     uploading = true;
     uploadError = '';
     try {
@@ -85,7 +99,10 @@
       action="?/updateIdentity"
       use:enhance={() => {
         submittingIdentity = true;
-        return ({ update }) => { update({ reset: false }); submittingIdentity = false; };
+        return ({ update }) => {
+          update({ reset: false });
+          submittingIdentity = false;
+        };
       }}
     >
       {#if form?.updated === 'identity' && form?.error}
@@ -146,7 +163,8 @@
             maxlength="160"
             placeholder="A short line about your club"
           />
-          <span class="hint">Shown under your club name on the public hub. Max 160 characters.</span>
+          <span class="hint">Shown under your club name on the public hub. Max 160 characters.</span
+          >
         </div>
       </div>
 
@@ -166,7 +184,10 @@
       action="?/updateBranding"
       use:enhance={() => {
         submittingBranding = true;
-        return ({ update }) => { update({ reset: false }); submittingBranding = false; };
+        return ({ update }) => {
+          update({ reset: false });
+          submittingBranding = false;
+        };
       }}
     >
       <input type="hidden" name="logoUrl" value={logoUrl} />
@@ -186,10 +207,18 @@
               <img src={logoUrl} alt="Club logo preview" class="logo-preview" />
             {:else}
               <div class="logo-placeholder" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <path d="M21 15l-5-5L5 21"/>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
                 </svg>
               </div>
             {/if}
@@ -216,7 +245,12 @@
         <div class="field">
           <label class="label" for="primaryColour">Primary colour</label>
           <div class="colour-row">
-            <input type="color" bind:value={primaryColour} class="colour-picker" aria-label="Pick primary colour" />
+            <input
+              type="color"
+              bind:value={primaryColour}
+              class="colour-picker"
+              aria-label="Pick primary colour"
+            />
             <input
               id="primaryColour"
               name="primaryColour"
@@ -232,7 +266,12 @@
         <div class="field">
           <label class="label" for="secondaryColour">Secondary colour</label>
           <div class="colour-row">
-            <input type="color" bind:value={secondaryColour} class="colour-picker" aria-label="Pick secondary colour" />
+            <input
+              type="color"
+              bind:value={secondaryColour}
+              class="colour-picker"
+              aria-label="Pick secondary colour"
+            />
             <input
               id="secondaryColour"
               name="secondaryColour"
@@ -243,6 +282,72 @@
               placeholder="#f4a27e"
             />
           </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="backgroundColour"
+            >Background colour <span class="opt">(optional)</span></label
+          >
+          <div class="colour-row">
+            <input
+              type="color"
+              bind:value={backgroundColour}
+              class="colour-picker"
+              aria-label="Pick background colour"
+            />
+            <input
+              id="backgroundColour"
+              name="backgroundColour"
+              type="text"
+              class="input colour-text"
+              bind:value={backgroundColour}
+              maxlength="7"
+              placeholder="Default"
+            />
+          </div>
+          <span class="hint"
+            >Overrides the default background on your public hub, if empty, it will use defualts.</span
+          >
+        </div>
+
+        <div class="field">
+          <span class="label">Hub appearance</span>
+          <div class="scheme-group" role="group" aria-label="Hub colour scheme">
+            <label class="scheme-option" class:scheme-active={colorScheme === 'SYSTEM'}>
+              <input
+                type="radio"
+                name="colorScheme"
+                value="SYSTEM"
+                bind:group={colorScheme}
+                class="scheme-radio"
+              />
+              System
+            </label>
+            <label class="scheme-option" class:scheme-active={colorScheme === 'LIGHT'}>
+              <input
+                type="radio"
+                name="colorScheme"
+                value="LIGHT"
+                bind:group={colorScheme}
+                class="scheme-radio"
+              />
+              Light
+            </label>
+            <label class="scheme-option" class:scheme-active={colorScheme === 'DARK'}>
+              <input
+                type="radio"
+                name="colorScheme"
+                value="DARK"
+                bind:group={colorScheme}
+                class="scheme-radio"
+              />
+              Dark
+            </label>
+          </div>
+          <span class="hint"
+            >Controls whether your public hub shows in light or dark mode, regardless of your
+            visitors' system preference.</span
+          >
         </div>
       </div>
 
@@ -257,14 +362,20 @@
   <!-- Danger zone -->
   <section class="card danger-card">
     <h2 class="section-title danger-heading">Danger zone</h2>
-    <p class="danger-sub">Deleting your club will permanently remove all sponsors, tiers, and analytics data. This cannot be undone.</p>
+    <p class="danger-sub">
+      Deleting your club will permanently remove all sponsors, tiers, and analytics data. This
+      cannot be undone.
+    </p>
 
     <form
       method="POST"
       action="?/deleteClub"
       use:enhance={({ cancel }) => {
         deleting = true;
-        return ({ update }) => { update(); deleting = false; };
+        return ({ update }) => {
+          update();
+          deleting = false;
+        };
       }}
     >
       {#if form?.error && !('updated' in (form ?? {}))}
@@ -286,7 +397,11 @@
       </div>
 
       <div class="actions" style="margin-top: var(--space-4)">
-        <Button variant="destructive" type="submit" disabled={deleting || confirmName !== data.club.name}>
+        <Button
+          variant="destructive"
+          type="submit"
+          disabled={deleting || confirmName !== data.club.name}
+        >
           {deleting ? 'Deleting…' : 'Delete club'}
         </Button>
       </div>
@@ -336,8 +451,13 @@
     color: var(--color-text);
   }
 
-  .req { color: var(--color-destructive); }
-  .opt { font-weight: 400; color: var(--color-text-muted); }
+  .req {
+    color: var(--color-destructive);
+  }
+  .opt {
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
 
   .input {
     background: var(--color-bg);
@@ -349,7 +469,9 @@
     color: var(--color-text);
     width: 100%;
     box-sizing: border-box;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   .input:focus {
@@ -358,8 +480,14 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
 
-  .hint { font-size: var(--text-xs); color: var(--color-text-muted); }
-  .field-error { font-size: var(--text-xs); color: var(--color-destructive); }
+  .hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+  .field-error {
+    font-size: var(--text-xs);
+    color: var(--color-destructive);
+  }
 
   .form-error {
     background: color-mix(in srgb, var(--color-destructive) 10%, transparent);
@@ -388,7 +516,9 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     overflow: hidden;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   .slug-wrap:focus-within {
@@ -415,16 +545,30 @@
     flex: 1;
   }
 
-  .slug-input:focus { outline: none; box-shadow: none !important; }
+  .slug-input:focus {
+    outline: none;
+    box-shadow: none !important;
+  }
 
-  .slug-ok { font-size: var(--text-xs); color: var(--color-success); }
-  .slug-taken { font-size: var(--text-xs); color: var(--color-destructive); }
+  .slug-ok {
+    font-size: var(--text-xs);
+    color: var(--color-success);
+  }
+  .slug-taken {
+    font-size: var(--text-xs);
+    color: var(--color-destructive);
+  }
 
   /* Logo upload */
-  .logo-area { display: flex; align-items: center; gap: var(--space-4); }
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
 
   .logo-preview {
-    width: 56px; height: 56px;
+    width: 56px;
+    height: 56px;
     object-fit: contain;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
@@ -433,7 +577,8 @@
   }
 
   .logo-placeholder {
-    width: 56px; height: 56px;
+    width: 56px;
+    height: 56px;
     border-radius: var(--radius-md);
     border: 1px dashed var(--color-border);
     background: var(--color-surface);
@@ -444,7 +589,11 @@
     flex-shrink: 0;
   }
 
-  .logo-right { display: flex; flex-direction: column; gap: var(--space-1); }
+  .logo-right {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
 
   .upload-btn {
     display: inline-flex;
@@ -463,7 +612,9 @@
     transition: background-color 0.15s ease;
   }
 
-  .upload-btn:hover { background: var(--color-surface); }
+  .upload-btn:hover {
+    background: var(--color-surface);
+  }
 
   .file-input {
     position: absolute;
@@ -474,10 +625,15 @@
   }
 
   /* Colour pickers */
-  .colour-row { display: flex; align-items: center; gap: var(--space-2); }
+  .colour-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
 
   .colour-picker {
-    width: 40px; height: 40px;
+    width: 40px;
+    height: 40px;
     padding: 2px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -486,14 +642,65 @@
     flex-shrink: 0;
   }
 
-  .colour-text { flex: 1; font-family: monospace; }
+  .colour-text {
+    flex: 1;
+    font-family: monospace;
+  }
+
+  /* Appearance segmented control */
+  .scheme-group {
+    display: inline-flex;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-bg);
+  }
+
+  .scheme-option {
+    display: flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
+    user-select: none;
+  }
+
+  .scheme-option + .scheme-option {
+    border-left: 1px solid var(--color-border);
+  }
+
+  .scheme-option:hover {
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .scheme-active {
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  .scheme-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+  }
 
   /* Danger zone */
   .danger-card {
     border-color: color-mix(in srgb, var(--color-destructive) 30%, var(--color-border));
   }
 
-  .danger-heading { color: var(--color-destructive); }
+  .danger-heading {
+    color: var(--color-destructive);
+  }
 
   .danger-sub {
     font-size: var(--text-sm);
@@ -501,9 +708,15 @@
     margin: calc(var(--space-5) * -1) 0 var(--space-5);
   }
 
-  .actions { display: flex; align-items: center; gap: var(--space-3); }
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
 
   @media (max-width: 820px) {
-    .screen { padding: var(--space-6) var(--space-4); }
+    .screen {
+      padding: var(--space-6) var(--space-4);
+    }
   }
 </style>

@@ -64,16 +64,24 @@ enum ClubStatus {
   SUSPENDED
 }
 
+enum ColorScheme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
 model Club {
-  id               String     @id @default(cuid())
+  id               String      @id @default(cuid())
   name             String
-  slug             String     @unique
+  slug             String      @unique
   tagline          String?
   logoUrl          String?
   primaryColour    String?
   secondaryColour  String?
   headingColour    String?
-  status           ClubStatus @default(ACTIVE)
+  backgroundColour String?
+  colorScheme      ColorScheme @default(SYSTEM)
+  status           ClubStatus  @default(ACTIVE)
   publishedAt      DateTime?
   stripeCustomerId String?    @unique
   createdAt        DateTime   @default(now())

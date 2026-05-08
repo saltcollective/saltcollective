@@ -102,7 +102,7 @@ Two separate env vars are required — Deno Deploy automatically injects `DATABA
 
 | Variable | Value | Used by |
 |---|---|---|
-| `DATABASE_URL` | `postgresql://...` — set automatically by Deno Deploy | Prisma migrations (`db:push`, `db:migrate`), also used as `directUrl` in `schema.prisma` |
+| `DATABASE_URL` | `postgresql://...` — set automatically by Deno Deploy | Prisma migrations (`db:migrate`), also used as `directUrl` in `schema.prisma` |
 | `PRISMA_URL` | `prisma+postgres://...` — Prisma Accelerate connection string, set manually in Deno Deploy dashboard | App at runtime (`packages/schema/src/index.ts` reads this via `process.env.PRISMA_URL`) |
 
 The schema reflects this split:
@@ -133,10 +133,7 @@ Defined in `packages/schema/deno.json`. All operations connect to Prisma Postgre
 }
 ```
 
-Operations requiring a tunnel (Studio, ad-hoc dev migrations) are invoked with the `--tunnel` flag:
-```
-deno task --tunnel db:migrate
-```
+All DB operations require the `--tunnel` flag to inject environment variables. `db:push` skips migration files and will cause migration history drift — only use it when data loss is acceptable (e.g. a fresh dev environment). Prefer `db:migrate` at all other times.
 
 
 ## Adapter Note
@@ -268,13 +265,14 @@ SvelteKit supports returning unawaited `Promise`s from `load` functions so the p
 # Start dev server (env vars injected via Deno Deploy tunnel)
 deno task --tunnel dev
 
-# Sync schema changes to DB during active modelling (no migration files created)
-deno task db:push
-
-# Generate a migration file when ready to ship a schema change to production
+# Add a schema change and create a migration file (preferred workflow)
 deno task --tunnel db:migrate
 
-# Reset dev DB and regenerate migrations (use when db:push and migration history have drifted)
+# Sync schema directly WITHOUT a migration file — only use when data loss is acceptable
+# (e.g. a brand-new dev environment). Using this then running db:migrate will cause drift.
+deno task --tunnel db:push
+
+# Reset dev DB and re-run all migrations from scratch (fixes drift, wipes all data)
 deno task --tunnel db:migrate:reset
 ```
 

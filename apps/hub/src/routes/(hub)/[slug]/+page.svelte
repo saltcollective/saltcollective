@@ -6,6 +6,11 @@
 
   const primary = $derived(data.club.primaryColour ?? '#68b7d2');
   const secondary = $derived(data.club.secondaryColour ?? '#f4a27e');
+  const bg = $derived(data.club.backgroundColour);
+  const theme = $derived(
+    data.club.colorScheme === 'LIGHT' ? 'light' :
+    data.club.colorScheme === 'DARK'  ? 'dark'  : null
+  );
 
   function track(businessId: string, type: 'EMAIL' | 'WEBSITE' | 'PHONE') {
     fetch('/api/click', {
@@ -16,7 +21,7 @@
   }
 </script>
 
-<div class="hub" style="--hub-primary: {primary}; --hub-secondary: {secondary}">
+<div class="hub" data-theme={theme} style="--hub-primary: {primary}; --hub-secondary: {secondary}{bg ? `; --hub-bg: ${bg}` : ''}">
   <header class="header">
     <div class="header-inner">
       {#if data.club.logoUrl}
@@ -115,6 +120,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background: var(--hub-bg, var(--color-bg));
   }
 
   /* ---- Header ---- */
