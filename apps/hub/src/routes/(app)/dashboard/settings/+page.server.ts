@@ -49,6 +49,7 @@ export const actions: Actions = {
     }
 
     await prisma.club.update({ where: { id: clubId }, data: { name, slug, tagline } });
+    await prisma.$accelerate.invalidate({ tags: [`club_${membership.club.slug.replace(/-/g, '_')}`] });
     return { updated: 'identity' as const, success: true, slugTaken: false as boolean };
   },
 
@@ -57,7 +58,7 @@ export const actions: Actions = {
 
     const membership = await prisma.clubMembership.findFirst({
       where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true } } },
+      select: { club: { select: { id: true, slug: true } } },
     });
     if (!membership) return fail(403, { updated: 'branding' as const, error: 'Admin access required' });
 
@@ -71,6 +72,7 @@ export const actions: Actions = {
     const colorScheme = rawScheme === 'LIGHT' || rawScheme === 'DARK' || rawScheme === 'SYSTEM' ? rawScheme : 'SYSTEM';
 
     await prisma.club.update({ where: { id: clubId }, data: { logoUrl, primaryColour, secondaryColour, backgroundColour, colorScheme } });
+    await prisma.$accelerate.invalidate({ tags: [`club_${membership.club.slug.replace(/-/g, '_')}`] });
     return { updated: 'branding' as const, success: true };
   },
 
