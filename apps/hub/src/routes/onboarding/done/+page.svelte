@@ -4,7 +4,7 @@
   let { data }: { data: PageData } = $props();
 
   let copied = $state(false);
-  const hubUrl = `saltcollective.club/${data.slug}`;
+  const hubUrl = $derived(`saltcollective.club/${data.slug}`);
 
   async function copyUrl() {
     await navigator.clipboard.writeText(`https://${hubUrl}`);

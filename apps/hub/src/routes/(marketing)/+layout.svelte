@@ -54,7 +54,7 @@
           <a href="/#features">What you get</a>
           <a href="/#how">How it works</a>
           <a href="/#pricing">The price</a>
-          <a href="#">Privacy</a>
+          <a href="/privacy">Privacy</a>
           <a href="/#contact">Email us</a>
         </nav>
         <span>© 2026 — made with care, in small batches.</span>

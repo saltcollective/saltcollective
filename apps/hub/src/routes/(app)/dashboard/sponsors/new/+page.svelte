@@ -142,6 +142,7 @@
               class:on={isActive}
               onclick={() => (isActive = !isActive)}
               aria-pressed={isActive}
+              aria-label="Toggle sponsor status"
             >
               <span class="toggle-thumb"></span>
             </button>

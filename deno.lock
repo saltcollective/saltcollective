@@ -2067,6 +2067,10 @@
     },
     "members": {
       "apps/hub": {
+        "dependencies": [
+          "npm:@prisma/client@6",
+          "npm:@prisma/extension-accelerate@1"
+        ],
         "packageJson": {
           "dependencies": [
             "npm:@aws-sdk/client-s3@^3.1041.0",

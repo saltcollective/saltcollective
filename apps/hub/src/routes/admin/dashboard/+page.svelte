@@ -3,7 +3,8 @@
 
   let { data }: { data: PageData } = $props();
 
-  const { stats, recentClubs } = data;
+  const stats = $derived(data.stats);
+  const recentClubs = $derived(data.recentClubs);
 
   function fmt(date: Date | string) {
     return new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(date));

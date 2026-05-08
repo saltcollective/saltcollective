@@ -4,5 +4,9 @@
     "build": "npm run build",
     "preview": "npm run preview",
     "check": "npm run check"
+  },
+  "imports": {
+    "@prisma/client": "npm:@prisma/client@^6.0.0",
+    "@prisma/extension-accelerate": "npm:@prisma/extension-accelerate@^1.0.0"
   }
 }

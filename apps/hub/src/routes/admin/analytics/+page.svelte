@@ -3,22 +3,28 @@
 
   let { data }: { data: PageData } = $props();
 
-  const { stats, topClubs, weeklyClicks, heatmap } = data;
-  const maxClicks = topClubs.length > 0 ? topClubs[0].clicks : 1;
+  const stats = $derived(data.stats);
+  const topClubs = $derived(data.topClubs);
+  const weeklyClicks = $derived(data.weeklyClicks);
+  const heatmap = $derived(data.heatmap);
+  const maxClicks = $derived(topClubs.length > 0 ? topClubs[0].clicks : 1);
 
   // SVG area chart for weekly clicks
   const W = 720, H = 180;
-  const min = Math.min(...weeklyClicks);
-  const max = Math.max(...weeklyClicks) || 1;
-  const pts = weeklyClicks.map((v, i) => {
-    const x = (i / (weeklyClicks.length - 1)) * W;
-    const y = H - ((v - min) / (max - min || 1)) * (H - 16) - 8;
-    return [x, y] as [number, number];
+  const chartData = $derived.by(() => {
+    const min = Math.min(...weeklyClicks);
+    const max = Math.max(...weeklyClicks) || 1;
+    const pts = weeklyClicks.map((v, i) => {
+      const x = (i / (weeklyClicks.length - 1)) * W;
+      const y = H - ((v - min) / (max - min || 1)) * (H - 16) - 8;
+      return [x, y] as [number, number];
+    });
+    const linePath = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+    const fillPath = linePath + ` L ${W} ${H} L 0 ${H} Z`;
+    return { pts, linePath, fillPath };
   });
-  const linePath = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
-  const fillPath = linePath + ` L ${W} ${H} L 0 ${H} Z`;
 
-  const heatmaxVal = Math.max(...heatmap.flat(), 1);
+  const heatmaxVal = $derived(Math.max(...heatmap.flat(), 1));
   const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 </script>
 
@@ -67,9 +73,9 @@
           <line x1="0" x2={W} y1={(H / 3) * i + 8} y2={(H / 3) * i + 8}
                 stroke="var(--color-border)" stroke-width="1" stroke-dasharray="2 4" />
         {/each}
-        <path d={fillPath} fill="var(--color-accent)" opacity="0.14" />
-        <path d={linePath} fill="none" stroke="var(--color-accent)" stroke-width="2" />
-        {#each pts as [x, y]}
+        <path d={chartData.fillPath} fill="var(--color-accent)" opacity="0.14" />
+        <path d={chartData.linePath} fill="none" stroke="var(--color-accent)" stroke-width="2" />
+        {#each chartData.pts as [x, y]}
           <circle cx={x} cy={y} r="3" fill="var(--color-accent)" stroke="var(--color-bg)" stroke-width="2" />
         {/each}
       </svg>

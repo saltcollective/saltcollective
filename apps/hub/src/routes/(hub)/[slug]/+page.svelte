@@ -4,8 +4,8 @@
 
   let { data }: { data: PageData } = $props();
 
-  const primary = data.club.primaryColour ?? '#68b7d2';
-  const secondary = data.club.secondaryColour ?? '#f4a27e';
+  const primary = $derived(data.club.primaryColour ?? '#68b7d2');
+  const secondary = $derived(data.club.secondaryColour ?? '#f4a27e');
 
   function track(businessId: string, type: 'EMAIL' | 'WEBSITE' | 'PHONE') {
     fetch('/api/click', {
