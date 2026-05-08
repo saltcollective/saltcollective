@@ -56,14 +56,18 @@
     justify-content: center;
     gap: var(--space-2);
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-full);
     font-family: var(--font-sans);
     font-weight: 600;
     line-height: var(--leading-tight);
     cursor: pointer;
     text-decoration: none;
-    transition: opacity 0.15s ease, background-color 0.15s ease;
+    transition: opacity 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
     white-space: nowrap;
+  }
+
+  .button:hover:not(:disabled):not([aria-disabled='true']) {
+    transform: translateY(-1px);
   }
 
   .button:disabled,
