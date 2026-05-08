@@ -2,14 +2,28 @@
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
   import { page } from '$app/state';
-  import Sidebar from '$lib/components/Sidebar.svelte';
+  import { AppSidebar } from '@saltcollective/ui';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   let drawerOpen = $state(false);
+  let collapsed = $state(false);
+
+  const navSections = [
+    {
+      items: [
+        { href: '/dashboard',           label: 'Dashboard', icon: 'grid',    exact: true },
+        { href: '/dashboard/sponsors',  label: 'Sponsors',  icon: 'tag' },
+        { href: '/dashboard/tiers',     label: 'Tiers',     icon: 'layers' },
+        { href: '/dashboard/analytics', label: 'Analytics', icon: 'chart' },
+        { href: '/dashboard/embed',     label: 'Embed',     icon: 'code' },
+        { href: '/dashboard/settings',  label: 'Settings',  icon: 'sliders' },
+      ],
+    },
+  ];
 </script>
 
-<div class="shell" class:drawerOpen>
+<div class="shell" class:collapsed class:drawerOpen>
   <!-- Mobile top bar -->
   <div class="mobileBar">
     <button
@@ -18,8 +32,15 @@
       aria-label="Open navigation"
       onclick={() => (drawerOpen = true)}
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
         <line x1="3" y1="6" x2="21" y2="6" />
         <line x1="3" y1="12" x2="21" y2="12" />
         <line x1="3" y1="18" x2="21" y2="18" />
@@ -29,19 +50,19 @@
   </div>
 
   <!-- Sidebar -->
-  <Sidebar
-    club={data.club}
+  <AppSidebar
+    sections={navSections}
+    identity={{ name: data.club.name, subtitle: 'Club admin' }}
+    footerLink={{ href: `/${data.club.slug}`, label: 'View public hub', external: true }}
     activeRoute={page.url.pathname}
+    {collapsed}
+    onToggle={() => (collapsed = !collapsed)}
     open={drawerOpen}
     onClose={() => (drawerOpen = false)}
   />
 
   <!-- Scrim (mobile) -->
-  <div
-    class="scrim"
-    role="presentation"
-    onclick={() => (drawerOpen = false)}
-  ></div>
+  <div class="scrim" role="presentation" onclick={() => (drawerOpen = false)}></div>
 
   <!-- Main content -->
   <main class="main">
@@ -54,6 +75,11 @@
     display: grid;
     grid-template-columns: 240px 1fr;
     min-height: 100vh;
+    transition: grid-template-columns 0.2s ease;
+  }
+
+  .shell.collapsed {
+    grid-template-columns: 64px 1fr;
   }
 
   .mobileBar {
@@ -70,7 +96,8 @@
 
   /* ---- Mobile ---- */
   @media (max-width: 820px) {
-    .shell {
+    .shell,
+    .shell.collapsed {
       grid-template-columns: 1fr;
     }
 

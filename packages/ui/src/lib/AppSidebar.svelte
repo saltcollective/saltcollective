@@ -1,34 +1,55 @@
 <script lang="ts">
-  import { BrandLogo } from '@saltcollective/ui';
+  import BrandLogo from './BrandLogo.svelte';
+
+  interface NavItem {
+    href: string;
+    label: string;
+    icon?: string;
+    exact?: boolean;
+  }
+
+  interface NavSection {
+    label?: string;
+    items: NavItem[];
+  }
+
+  interface Identity {
+    name: string;
+    subtitle: string;
+    initial?: string;
+  }
+
+  interface FooterLink {
+    href: string;
+    label: string;
+    external?: boolean;
+  }
 
   interface Props {
     activeRoute: string;
-    collapsed: boolean;
-    onToggle: () => void;
+    sections: NavSection[];
+    identity: Identity;
     open: boolean;
     onClose: () => void;
-    user: { email: string; username: string | null };
+    collapsed?: boolean;
+    onToggle?: () => void;
+    tag?: string;
+    footerLink?: FooterLink;
   }
 
-  let { activeRoute, collapsed, onToggle, open, onClose, user }: Props = $props();
+  let {
+    activeRoute,
+    sections,
+    identity,
+    open,
+    onClose,
+    collapsed = false,
+    onToggle,
+    tag,
+    footerLink,
+  }: Props = $props();
 
-  const sections = [
-    {
-      label: 'Overview',
-      items: [
-        { href: '/admin/dashboard', label: 'Dashboard', icon: 'grid' },
-        { href: '/admin/analytics', label: 'Analytics', icon: 'chart' },
-      ],
-    },
-    {
-      label: 'Manage',
-      items: [
-        { href: '/admin/clubs',   label: 'Clubs',   icon: 'building' },
-        { href: '/admin/users',   label: 'Users',   icon: 'users' },
-        { href: '/admin/billing', label: 'Billing', icon: 'card' },
-      ],
-    },
-  ];
+  const initial = $derived(identity.initial ?? identity.name[0]?.toUpperCase() ?? '?');
 
   function iconPath(name: string): string {
     switch (name) {
@@ -42,21 +63,21 @@
         return '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M21 19c0-2-2-4-4-4"/>';
       case 'card':
         return '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>';
+      case 'tag':
+        return '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>';
+      case 'layers':
+        return '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>';
+      case 'code':
+        return '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>';
+      case 'sliders':
+        return '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>';
       default:
         return '';
     }
   }
-
-  const initials = $derived(
-    user.username
-      ? user.username.slice(0, 2).toUpperCase()
-      : user.email.split('@')[0].slice(0, 2).toUpperCase()
-  );
-
-  const displayName = $derived(user.username ?? user.email.split('@')[0]);
 </script>
 
-<aside class="sidebar" class:collapsed class:open aria-label="Admin navigation">
+<aside class="sidebar" class:collapsed class:open aria-label="Navigation">
   <button class="closeBtn" type="button" aria-label="Close menu" onclick={onClose}>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -72,34 +93,40 @@
       <a href="/" class="brandLink" aria-label="Salt Collective home">
         <BrandLogo height={20} />
       </a>
-      <span class="brandTag">Admin</span>
+      {#if tag}
+        <span class="brandTag">{tag}</span>
+      {/if}
     {/if}
   </div>
 
   <nav class="nav">
     {#each sections as section}
       <div class="section">
-        {#if !collapsed}
+        {#if section.label && !collapsed}
           <div class="sectionLabel">{section.label}</div>
         {/if}
         {#each section.items as item}
-          {@const isActive = activeRoute === item.href || activeRoute.startsWith(item.href + '/')}
+          {@const isActive = item.exact
+            ? activeRoute === item.href
+            : activeRoute === item.href || activeRoute.startsWith(item.href + '/')}
           <a
             href={item.href}
-            class="navitem"
+            class="navItem"
             class:active={isActive}
             title={collapsed ? item.label : undefined}
             onclick={onClose}
           >
-            <span class="navicon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="1.7"
-                   stroke-linecap="round" stroke-linejoin="round">
-                {@html iconPath(item.icon)}
-              </svg>
-            </span>
+            {#if item.icon}
+              <span class="navIcon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  {@html iconPath(item.icon)}
+                </svg>
+              </span>
+            {/if}
             {#if !collapsed}
-              <span class="navlabel">{item.label}</span>
+              <span class="navLabel">{item.label}</span>
             {/if}
           </a>
         {/each}
@@ -107,34 +134,52 @@
     {/each}
   </nav>
 
-  <div class="foot">
-    <div class="staff">
-      <div class="avatar">{initials}</div>
+  <div class="footer">
+    {#if footerLink && !collapsed}
+      <a
+        href={footerLink.href}
+        class="footerLink"
+        target={footerLink.external ? '_blank' : undefined}
+        rel={footerLink.external ? 'noopener noreferrer' : undefined}
+        onclick={onClose}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        {footerLink.label}
+        {#if footerLink.external}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+        {/if}
+      </a>
+    {/if}
+
+    <div class="identity">
+      <div class="avatar">{initial}</div>
       {#if !collapsed}
-        <div class="meta">
-          <div class="staffName">{displayName}</div>
-          <div class="staffRole">Salt Collective · Admin</div>
+        <div class="identityMeta">
+          <div class="identityName">{identity.name}</div>
+          <div class="identitySubtitle">{identity.subtitle}</div>
         </div>
       {/if}
-    </div>
-    <button
-      class="toggleBtn"
-      type="button"
-      onclick={onToggle}
-      aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-    >
-      {#if collapsed}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
-        </svg>
-      {:else}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
-        </svg>
+      {#if onToggle}
+        <button
+          class="toggleBtn"
+          type="button"
+          onclick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {#if collapsed}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
+            </svg>
+          {:else}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
+            </svg>
+          {/if}
+        </button>
       {/if}
-    </button>
+    </div>
   </div>
 </aside>
 
@@ -215,17 +260,15 @@
     text-transform: uppercase;
     color: var(--color-text-muted);
     padding: 0 var(--space-2);
-    margin: var(--space-1) 0 var(--space-1);
+    margin: var(--space-1) 0;
   }
 
-  .navitem {
+  .navItem {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    background: transparent;
     border: 1px solid transparent;
     text-align: left;
-    cursor: pointer;
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
@@ -235,18 +278,18 @@
     transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
 
-  .navitem:hover {
+  .navItem:hover {
     background: var(--color-surface-2);
     color: var(--color-text);
   }
 
-  .navitem.active {
+  .navItem.active {
     background: var(--color-surface-2);
     color: var(--color-text);
     border-color: var(--color-border);
   }
 
-  .navicon {
+  .navIcon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -256,14 +299,14 @@
     color: var(--color-text-muted);
   }
 
-  .navitem.active .navicon {
+  .navItem.active .navIcon {
     color: var(--color-accent);
   }
 
-  .navlabel { flex: 1; }
+  .navLabel { flex: 1; }
 
   /* ---------- Collapsed nav ---------- */
-  .collapsed .navitem {
+  .collapsed .navItem {
     justify-content: center;
     padding: var(--space-2);
   }
@@ -278,26 +321,47 @@
   }
 
   /* ---------- Footer ---------- */
-  .foot {
+  .footer {
     border-top: 1px solid var(--color-border);
-    padding-top: var(--space-3);
+    padding-top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .footerLink {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    transition: color 0.15s ease, background-color 0.15s ease;
   }
 
-  .collapsed .foot {
-    flex-direction: column;
-    align-items: center;
+  .footerLink:hover {
+    color: var(--color-accent);
+    background: var(--color-surface-2);
   }
 
-  .staff {
+  .footerLink svg:last-child {
+    margin-left: auto;
+    opacity: 0.5;
+  }
+
+  .identity {
     display: flex;
     align-items: center;
     gap: var(--space-3);
     min-width: 0;
-    flex: 1;
+  }
+
+  .collapsed .identity {
+    flex-direction: column;
+    align-items: center;
   }
 
   .avatar {
@@ -314,9 +378,25 @@
     flex-shrink: 0;
   }
 
-  .meta { line-height: 1.2; min-width: 0; }
-  .staffName { font-size: var(--text-sm); font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .staffRole { font-size: 11px; color: var(--color-text-muted); }
+  .identityMeta {
+    line-height: 1.2;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .identityName {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .identitySubtitle {
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
 
   .toggleBtn {
     background: transparent;
@@ -379,7 +459,7 @@
 
     .toggleBtn { display: none; }
 
-    .collapsed .navitem {
+    .collapsed .navItem {
       justify-content: flex-start;
       padding: var(--space-2) var(--space-3);
     }

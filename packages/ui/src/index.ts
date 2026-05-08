@@ -1,3 +1,4 @@
+export { default as AppSidebar } from './lib/AppSidebar.svelte';
 export { default as BrandLogo } from './lib/BrandLogo.svelte';
 export { default as Stat } from './lib/Stat.svelte';
 export { default as Button } from './lib/Button.svelte';

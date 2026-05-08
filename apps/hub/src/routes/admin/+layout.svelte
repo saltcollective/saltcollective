@@ -3,12 +3,38 @@
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
   import { page } from '$app/state';
-  import AdminSidebar from '$lib/components/AdminSidebar.svelte';
+  import { AppSidebar } from '@saltcollective/ui';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   let collapsed = $state(false);
   let drawerOpen = $state(false);
+
+  const adminSections = [
+    {
+      label: 'Overview',
+      items: [
+        { href: '/admin/dashboard', label: 'Dashboard', icon: 'grid' },
+        { href: '/admin/analytics', label: 'Analytics', icon: 'chart' },
+      ],
+    },
+    {
+      label: 'Manage',
+      items: [
+        { href: '/admin/clubs',   label: 'Clubs',   icon: 'building' },
+        { href: '/admin/users',   label: 'Users',   icon: 'users' },
+        { href: '/admin/billing', label: 'Billing', icon: 'card' },
+      ],
+    },
+  ];
+
+  const adminIdentity = $derived({
+    name: data.user.username ?? data.user.email.split('@')[0],
+    subtitle: 'Salt Collective · Admin',
+    initial: data.user.username
+      ? data.user.username.slice(0, 2).toUpperCase()
+      : data.user.email.split('@')[0].slice(0, 2).toUpperCase(),
+  });
 </script>
 
 <div class="shell" class:collapsed class:drawerOpen>
@@ -30,13 +56,15 @@
     <span class="mobileTitle">Admin</span>
   </div>
 
-  <AdminSidebar
+  <AppSidebar
+    sections={adminSections}
+    identity={adminIdentity}
+    tag="Admin"
     activeRoute={page.url.pathname}
     {collapsed}
     onToggle={() => (collapsed = !collapsed)}
     open={drawerOpen}
     onClose={() => (drawerOpen = false)}
-    user={data.user}
   />
 
   <div

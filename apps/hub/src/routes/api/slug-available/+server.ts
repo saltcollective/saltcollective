@@ -1,11 +1,15 @@
 import { json } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { RESERVED_SLUGS } from '$lib/server/reserved-slugs';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url }) => {
   const slug = url.searchParams.get('slug') ?? '';
   const excludeId = url.searchParams.get('excludeId') ?? '';
   if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug) || slug.length < 2) {
+    return json({ available: false });
+  }
+  if (RESERVED_SLUGS.has(slug)) {
     return json({ available: false });
   }
   const existing = await prisma.club.findUnique({ where: { slug }, select: { id: true } });

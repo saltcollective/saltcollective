@@ -1,5 +1,6 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { RESERVED_SLUGS } from '$lib/server/reserved-slugs';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -29,6 +30,10 @@ export const actions: Actions = {
 
     if (!slug || slug.length < 2 || !/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug)) {
       return fail(400, { ...base, error: 'Slug must be at least 2 characters — lowercase letters, numbers, and hyphens only' });
+    }
+
+    if (RESERVED_SLUGS.has(slug)) {
+      return fail(400, { ...base, error: 'That URL is reserved — try a different one', slugTaken: true });
     }
 
     const existing = await prisma.club.findUnique({ where: { slug }, select: { id: true } });
