@@ -17,7 +17,11 @@ export const load: PageServerLoad = async ({ parent, url }) => {
     since.setHours(0, 0, 0, 0);
   }
 
-  const [businesses, clicks] = await Promise.all([
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
+  twelveMonthsAgo.setHours(0, 0, 0, 0);
+
+  const [businesses, clicks, rawEvents] = await Promise.all([
     prisma.business.findMany({
       where: { clubId: club.id },
       orderBy: [{ sponsorTier: { order: 'asc' } }, { name: 'asc' }],
@@ -37,6 +41,13 @@ export const load: PageServerLoad = async ({ parent, url }) => {
       },
       _count: { id: true },
     }),
+    prisma.clickEvent.findMany({
+      where: {
+        clubId: club.id,
+        createdAt: { gte: since ?? twelveMonthsAgo },
+      },
+      select: { createdAt: true },
+    }),
   ]);
 
   const clickMap: Record<string, { EMAIL: number; WEBSITE: number; PHONE: number }> = {};
@@ -53,6 +64,37 @@ export const load: PageServerLoad = async ({ parent, url }) => {
   });
 
   const totalClicks = rows.reduce((sum, r) => sum + r.clicks.total, 0);
+  const totalWebsite = rows.reduce((s, r) => s + r.clicks.WEBSITE, 0);
+  const totalEmail = rows.reduce((s, r) => s + r.clicks.EMAIL, 0);
+  const totalPhone = rows.reduce((s, r) => s + r.clicks.PHONE, 0);
 
-  return { period, rows, totalClicks };
+  const useMonthly = period === 'all';
+  const buckets = new Map<string, number>();
+
+  if (!useMonthly) {
+    const days = PERIODS[period as keyof typeof PERIODS];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      buckets.set(d.toISOString().slice(0, 10), 0);
+    }
+  } else {
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - i);
+      buckets.set(d.toISOString().slice(0, 7), 0);
+    }
+  }
+
+  for (const e of rawEvents) {
+    const key = useMonthly
+      ? new Date(e.createdAt).toISOString().slice(0, 7)
+      : new Date(e.createdAt).toISOString().slice(0, 10);
+    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
+  }
+
+  const chart = [...buckets.entries()].map(([date, total]) => ({ date, total }));
+
+  return { period, rows, totalClicks, totalWebsite, totalEmail, totalPhone, chart };
 };

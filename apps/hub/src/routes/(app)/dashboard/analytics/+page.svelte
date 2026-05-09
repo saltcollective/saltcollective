@@ -1,5 +1,6 @@
 <script lang="ts">
   import PageHeader from '$lib/components/PageHeader.svelte';
+  import { Stat } from '@saltcollective/ui';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -8,6 +9,39 @@
     data.period === '30d' ? 'Last 30 days' :
     data.period === '90d' ? 'Last 90 days' : 'All time'
   );
+
+  const CHART_W = 600;
+  const CHART_H = 120;
+  const BAR_GAP = 2;
+
+  function shouldShowLabel(i: number, n: number, step: number) {
+    return i === 0 || i === n - 1 || i % step === 0;
+  }
+
+  function formatLabel(date: string, period: string) {
+    if (period === 'all') {
+      return new Date(date + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    }
+    return new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  const chartBars = $derived.by(() => {
+    const pts = data.chart;
+    if (!pts.length) return [];
+    const maxVal = Math.max(...pts.map(p => p.total), 1);
+    const n = pts.length;
+    const barW = (CHART_W - BAR_GAP * (n - 1)) / n;
+    const step = Math.max(1, Math.round(n / 6));
+    return pts.map((p, i) => ({
+      x: i * (barW + BAR_GAP),
+      y: CHART_H - (p.total / maxVal) * CHART_H,
+      w: barW,
+      h: (p.total / maxVal) * CHART_H,
+      date: p.date,
+      total: p.total,
+      label: shouldShowLabel(i, n, step) ? formatLabel(p.date, data.period) : null,
+    }));
+  });
 </script>
 
 <div class="screen">
@@ -23,6 +57,63 @@
       {data.totalClicks} total click{data.totalClicks === 1 ? '' : 's'} · {periodLabel}
     </p>
   </div>
+
+  <div class="stats">
+    <Stat label="Total clicks"   value={data.totalClicks} />
+    <Stat label="Website clicks" value={data.totalWebsite} />
+    <Stat label="Email clicks"   value={data.totalEmail} />
+    <Stat label="Phone clicks"   value={data.totalPhone} />
+  </div>
+
+  <section class="chartCard">
+    <h2 class="chartTitle">Clicks over time</h2>
+    {#if chartBars.every(b => b.total === 0)}
+      <p class="chartEmpty">No clicks recorded for this period.</p>
+    {:else}
+      <div class="chartWrap">
+        <svg
+          viewBox="0 0 {CHART_W} {CHART_H + 24}"
+          preserveAspectRatio="none"
+          class="chartSvg"
+          role="img"
+          aria-label="Clicks over time bar chart"
+        >
+          {#each [0.25, 0.5, 0.75, 1] as frac}
+            <line
+              x1="0" x2={CHART_W}
+              y1={CHART_H - frac * CHART_H}
+              y2={CHART_H - frac * CHART_H}
+              stroke="var(--color-border)"
+              stroke-width="1"
+              stroke-dasharray="2 4"
+            />
+          {/each}
+          {#each chartBars as bar}
+            <rect
+              x={bar.x} y={bar.y}
+              width={bar.w} height={bar.h}
+              rx="2"
+              fill="var(--color-accent)"
+              opacity="0.8"
+            >
+              <title>{bar.date}: {bar.total} click{bar.total === 1 ? '' : 's'}</title>
+            </rect>
+          {/each}
+          {#each chartBars as bar}
+            {#if bar.label}
+              <text
+                x={bar.x + bar.w / 2}
+                y={CHART_H + 18}
+                text-anchor="middle"
+                font-size="9"
+                fill="var(--color-text-muted)"
+              >{bar.label}</text>
+            {/if}
+          {/each}
+        </svg>
+      </div>
+    {/if}
+  </section>
 
   <section class="card">
     {#if data.rows.length === 0}
@@ -120,6 +211,43 @@
   .summary {
     font-size: var(--text-sm);
     color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  /* ---- Stats row ---- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+  }
+
+  /* ---- Chart card ---- */
+  .chartCard {
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5) var(--space-6) var(--space-4);
+  }
+
+  .chartTitle {
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+    margin: 0 0 var(--space-4);
+  }
+
+  .chartSvg {
+    display: block;
+    width: 100%;
+    min-height: 80px;
+  }
+
+  .chartEmpty {
+    padding: var(--space-6) 0;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
     margin: 0;
   }
 
@@ -241,6 +369,15 @@
     .chips::-webkit-scrollbar { display: none; }
 
     .chip { flex: 0 0 auto; }
+
+    .stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+    }
+
+    .chartCard {
+      padding: var(--space-4);
+    }
 
     /* Reflow table to card rows */
     .table thead { display: none; }

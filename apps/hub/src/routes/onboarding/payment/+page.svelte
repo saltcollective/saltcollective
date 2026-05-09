@@ -1,7 +1,10 @@
 <script lang="ts">
-  import type { PageData } from './$types';
+  import { enhance } from '$app/forms';
+  import type { PageData, ActionData } from './$types';
 
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
+
+  let applying = $state(false);
 </script>
 
 <div class="ob-content">
@@ -33,6 +36,37 @@
       Start subscription
     </button>
     <p class="plan-soon">Subscription payments coming soon.</p>
+  </div>
+
+  <div class="divider"><span>or</span></div>
+
+  <div class="code-section">
+    <p class="code-label">Have a discount code?</p>
+    <form
+      method="POST"
+      action="?/applyCode&club={data.clubId}"
+      use:enhance={() => {
+        applying = true;
+        return ({ update }) => { update(); applying = false; };
+      }}
+    >
+      <div class="code-row">
+        <input
+          type="text"
+          name="code"
+          class="code-input"
+          placeholder="Enter code"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="submit" class="ob-btn ob-btn-secondary" disabled={applying}>
+          {applying ? 'Applying…' : 'Apply'}
+        </button>
+      </div>
+      {#if form?.codeError}
+        <p class="code-error">{form.codeError}</p>
+      {/if}
+    </form>
   </div>
 
   <a href="/onboarding/done?club={data.clubId}" class="ob-skip">
@@ -132,5 +166,66 @@
     color: var(--color-text-muted);
     text-align: center;
     margin: calc(-1 * var(--space-2)) 0 0;
+  }
+
+  /* ---- Divider ---- */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  /* ---- Discount code section ---- */
+  .code-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .code-label {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .code-row {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .code-input {
+    flex: 1;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: border-color 0.15s;
+  }
+
+  .code-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  }
+
+  .code-error {
+    font-size: var(--text-xs);
+    color: var(--color-destructive);
+    margin: 0;
   }
 </style>

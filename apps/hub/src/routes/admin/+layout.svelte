@@ -21,9 +21,10 @@
     {
       label: 'Manage',
       items: [
-        { href: '/admin/clubs',   label: 'Clubs',   icon: 'building' },
-        { href: '/admin/users',   label: 'Users',   icon: 'users' },
-        { href: '/admin/billing', label: 'Billing', icon: 'card' },
+        { href: '/admin/clubs',          label: 'Clubs',          icon: 'building' },
+        { href: '/admin/users',          label: 'Users',          icon: 'users' },
+        { href: '/admin/billing',        label: 'Billing',        icon: 'card' },
+        { href: '/admin/discount-codes', label: 'Discount Codes', icon: 'tag' },
       ],
     },
   ];
