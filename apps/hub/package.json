@@ -14,6 +14,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1041.0",
     "@saltcollective/schema": "*",
     "@saltcollective/ui": "*",
+    "resend": "^4.8.0",
     "svelte-clerk": "^1.1.5"
   },
   "devDependencies": {

@@ -94,6 +94,7 @@ model Club {
   tags          Tag[]
   clickEvents   ClickEvent[]
   discountCode  DiscountCode?
+  invites       ClubInvite[]
 }
 
 model SponsorTier {
@@ -172,4 +173,25 @@ model DiscountCode {
 
   createdBy  User  @relation("DiscountCodeCreator", fields: [createdByUserId], references: [id])
   redeemedBy Club? @relation(fields: [redeemedByClubId], references: [id])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
+model ClubInvite {
+  id        String       @id @default(cuid())
+  clubId    String
+  email     String
+  role      ClubRole     @default(EDITOR)
+  token     String       @unique @default(cuid())
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  expiresAt DateTime?
+
+  club Club @relation(fields: [clubId], references: [id])
+
+  @@unique([clubId, email])
 }

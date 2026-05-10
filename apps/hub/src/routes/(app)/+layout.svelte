@@ -17,6 +17,7 @@
         { href: '/dashboard/tiers',     label: 'Tiers',     icon: 'layers' },
         { href: '/dashboard/analytics', label: 'Analytics', icon: 'chart' },
         { href: '/dashboard/embed',     label: 'Embed',     icon: 'code' },
+        { href: '/dashboard/team',      label: 'Team',      icon: 'users' },
         { href: '/dashboard/settings',  label: 'Settings',  icon: 'sliders' },
       ],
     },

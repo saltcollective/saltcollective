@@ -91,7 +91,7 @@
       <div class="brandMark">S</div>
     {:else}
       <a href="/" class="brandLink" aria-label="Salt Collective home">
-        <BrandLogo height={20} />
+        <BrandLogo fullWidth />
       </a>
       {#if tag}
         <span class="brandTag">{tag}</span>
@@ -210,6 +210,7 @@
     display: flex;
     align-items: center;
     text-decoration: none;
+    width: 100%;
   }
 
   .brandMark {

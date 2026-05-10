@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ params, setHeaders }) => {
       colorScheme: true,
       publishedAt: true,
     },
-    cacheStrategy: { ttl: 60, swr: 300, tags: [`club_${params.slug.replace(/-/g, '_')}`] },
+    cacheStrategy: { ttl: 60, swr: 300, tags: [`club_${params.slug.replace(/[^a-zA-Z0-9_]/g, '_')}`] },
   });
 
   if (!club || !club.publishedAt) error(404, 'Hub not found');
@@ -42,7 +42,7 @@ export const load: PageServerLoad = async ({ params, setHeaders }) => {
         },
       },
     },
-    cacheStrategy: { ttl: 60, swr: 300, tags: [`club_${params.slug.replace(/-/g, '_')}`] },
+    cacheStrategy: { ttl: 60, swr: 300, tags: [`club_${params.slug.replace(/[^a-zA-Z0-9_]/g, '_')}`] },
   });
 
   setHeaders({ 'cache-control': 'public, max-age=60, stale-while-revalidate=300' });

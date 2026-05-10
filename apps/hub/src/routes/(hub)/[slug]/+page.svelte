@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { BrandLogo } from '@saltcollective/ui';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -159,7 +158,7 @@
   <footer class="footer">
     <a href="https://saltcollective.club" class="footer-link" aria-label="Powered by Salt Collective">
       <span class="footer-text">Powered by</span>
-      <BrandLogo height={14} />
+      <strong class="footer-brand">Salt Collective</strong>
     </a>
   </footer>
 </div>
@@ -508,6 +507,12 @@
   .footer-text {
     font-size: var(--text-xs);
     color: var(--color-text-muted);
+  }
+
+  .footer-brand {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: #fff;
   }
 
   /* ---- Responsive ---- */

@@ -2079,6 +2079,7 @@
             "npm:@sveltejs/kit@2",
             "npm:@sveltejs/vite-plugin-svelte@4",
             "npm:prisma@6",
+            "npm:resend@^4.8.0",
             "npm:svelte-check@4",
             "npm:svelte-clerk@^1.1.5",
             "npm:svelte@5",
