@@ -3,7 +3,8 @@
     "dev": "npm run dev",
     "build": "npm run build",
     "preview": "npm run preview",
-    "check": "npm run check"
+    "check": "npm run check",
+    "email:test": "deno run -A scripts/test-email.ts"
   },
   "imports": {
     "@prisma/client": "npm:@prisma/client@^6.0.0",

@@ -11,6 +11,7 @@
 - Click tracking (Must)
 - Hosted hub page (Must)
 - Embeddable iframe (Should)
+- Sponsor request — business expresses interest from the hub (Should); Phase 1 = expression of interest, Phase 2 = full payment pipeline via Stripe Connect
 
 ## Club Admin (Must)
 

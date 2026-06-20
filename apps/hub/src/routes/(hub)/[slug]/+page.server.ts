@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ params, setHeaders }) => {
       id: true,
       name: true,
       businesses: {
-        where: { isActive: true },
+        where: { status: 'ACTIVE' },
         orderBy: { name: 'asc' },
         select: {
           id: true,

@@ -55,7 +55,18 @@ export const actions: Actions = {
     }
 
     await prisma.business.create({
-      data: { clubId, sponsorTierId, name, description, email, phone, websiteUrl, logoUrl, isActive },
+      data: {
+        clubId,
+        sponsorTierId,
+        name,
+        description,
+        email,
+        phone,
+        websiteUrl,
+        logoUrl,
+        status: isActive ? 'ACTIVE' : 'ARCHIVED',
+        source: 'admin',
+      },
     });
 
     redirect(302, '/dashboard/sponsors');

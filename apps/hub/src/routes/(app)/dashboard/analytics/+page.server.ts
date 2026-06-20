@@ -23,13 +23,13 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 
   const [businesses, clicks, rawEvents] = await Promise.all([
     prisma.business.findMany({
-      where: { clubId: club.id },
+      where: { clubId: club.id, status: { in: ['ACTIVE', 'ARCHIVED'] } },
       orderBy: [{ sponsorTier: { order: 'asc' } }, { name: 'asc' }],
       select: {
         id: true,
         name: true,
         logoUrl: true,
-        isActive: true,
+        status: true,
         sponsorTier: { select: { name: true } },
       },
     }),

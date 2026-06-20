@@ -19,6 +19,7 @@
     "build": "deno task --cwd apps/hub build",
     "preview": "deno task --cwd apps/hub preview",
     "check": "deno task --cwd apps/hub check",
+    "email:test": "deno task --cwd apps/hub email:test",
     "format": "npm run format",
     "format:check": "npm run format:check",
     "db:generate": "deno task --cwd packages/schema db:generate",
@@ -34,6 +35,8 @@
     "app": "saltcollective"
   }
 }
+
+
 
 
 

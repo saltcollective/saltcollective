@@ -54,6 +54,7 @@
           <p class="club-tagline">{data.club.tagline}</p>
         {/if}
       </div>
+      <a class="sponsor-cta" href="/{data.club.slug}/sponsor">Become a sponsor</a>
     </div>
   </header>
 
@@ -195,6 +196,26 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+  }
+
+  .sponsor-cta {
+    margin-left: auto;
+    align-self: center;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    background: var(--hub-primary);
+    color: #fff;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    text-decoration: none;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    transition: opacity 0.15s ease;
+  }
+
+  .sponsor-cta:hover {
+    opacity: 0.9;
   }
 
   .club-logo {

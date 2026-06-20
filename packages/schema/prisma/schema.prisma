@@ -112,22 +112,33 @@ model SponsorTier {
   @@unique([clubId, order])
 }
 
+enum BusinessStatus {
+  LEAD // submitted via sponsor request, awaiting admin action
+  ACTIVE // live on the hub
+  DECLINED // admin declined the lead
+  ARCHIVED // previously active, removed from the hub
+}
+
 model Business {
-  id            String   @id @default(cuid())
+  id            String         @id @default(cuid())
   clubId        String
-  sponsorTierId String
+  sponsorTierId String? // nullable: a lead has a *desired* tier, which may be unset
   name          String
-  description   String
+  description   String? // nullable: a lead may not provide a description up front
   logoUrl       String?
   phone         String?
   email         String?
   websiteUrl    String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        BusinessStatus @default(ACTIVE)
+  contactName   String? // person who submitted a sponsor request
+  desiredSpend  Decimal?       @db.Decimal(10, 2)
+  message       String? // free-text note from a sponsor request
+  source        String? // e.g. "sponsor-request" vs admin-created
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  club        Club        @relation(fields: [clubId], references: [id])
-  sponsorTier SponsorTier @relation(fields: [sponsorTierId], references: [id])
+  club        Club         @relation(fields: [clubId], references: [id])
+  sponsorTier SponsorTier? @relation(fields: [sponsorTierId], references: [id])
   tags        Tag[]
   clickEvents ClickEvent[]
 }

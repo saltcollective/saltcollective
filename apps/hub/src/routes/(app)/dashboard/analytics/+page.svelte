@@ -152,7 +152,7 @@
                   <span class="rowTitle">{row.name}</span>
                 </div>
               </td>
-              <td class="muted">{row.sponsorTier.name}</td>
+              <td class="muted">{row.sponsorTier?.name ?? '—'}</td>
               <td class="num">{row.clicks.WEBSITE || '—'}</td>
               <td class="num">{row.clicks.EMAIL || '—'}</td>
               <td class="num">{row.clicks.PHONE || '—'}</td>

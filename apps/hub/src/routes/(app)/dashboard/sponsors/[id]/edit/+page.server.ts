@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ parent, params }) => {
       where: { id: params.id, clubId: club.id },
       select: {
         id: true, name: true, description: true, email: true, phone: true,
-        websiteUrl: true, logoUrl: true, isActive: true, sponsorTierId: true,
+        websiteUrl: true, logoUrl: true, status: true, sponsorTierId: true,
       },
     }),
     prisma.sponsorTier.findMany({
@@ -73,7 +73,16 @@ export const actions: Actions = {
 
     await prisma.business.update({
       where: { id: params.id },
-      data: { name, description, sponsorTierId, email, phone, websiteUrl, logoUrl, isActive },
+      data: {
+        name,
+        description,
+        sponsorTierId,
+        email,
+        phone,
+        websiteUrl,
+        logoUrl,
+        status: isActive ? 'ACTIVE' : 'ARCHIVED',
+      },
     });
 
     redirect(302, '/dashboard/sponsors');

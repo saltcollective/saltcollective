@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Badge, Stat } from '@saltcollective/ui';
   import PageHeader from '$lib/components/PageHeader.svelte';
+  import { STATUS_LABEL, STATUS_VARIANT } from '$lib/businessStatus';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -15,9 +16,15 @@
   <div class="stats">
     <Stat label="Total sponsors" value={data.stats.total} />
     <Stat label="Active" value={data.stats.active} />
-    <Stat label="Inactive" value={data.stats.inactive} />
+    <Stat label="New leads" value={data.stats.leads} />
     <Stat label="Views this month" value={data.stats.viewsThisMonth} />
   </div>
+
+  {#if data.stats.leads > 0}
+    <a class="leadBanner" href="/dashboard/sponsors?status=LEAD">
+      You have {data.stats.leads} sponsorship {data.stats.leads === 1 ? 'request' : 'requests'} awaiting review →
+    </a>
+  {/if}
 
   <section class="card">
     <header class="cardHeader">
@@ -35,11 +42,11 @@
               <div class="avatar">{business.name[0].toUpperCase()}</div>
               <div>
                 <div class="rowTitle">{business.name}</div>
-                <div class="rowSub">{business.sponsorTier.name}</div>
+                <div class="rowSub">{business.sponsorTier?.name ?? 'No tier'}</div>
               </div>
             </div>
-            <Badge variant={business.isActive ? 'success' : 'default'}>
-              {business.isActive ? 'Active' : 'Inactive'}
+            <Badge variant={STATUS_VARIANT[business.status]}>
+              {STATUS_LABEL[business.status]}
             </Badge>
           </li>
         {/each}
@@ -60,6 +67,23 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-4);
+  }
+
+  .leadBanner {
+    display: block;
+    background: color-mix(in srgb, var(--color-warning, #d99a2b) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-warning, #d99a2b) 35%, var(--color-border));
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .leadBanner:hover {
+    background: color-mix(in srgb, var(--color-warning, #d99a2b) 18%, transparent);
   }
 
   .card {

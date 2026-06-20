@@ -7,8 +7,8 @@
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
   let logoUrl = $state(data.business.logoUrl ?? '');
-  let isActive = $state(data.business.isActive);
-  let selectedTierId = $state(form?.sponsorTierId ?? data.business.sponsorTierId);
+  let isActive = $state(data.business.status === 'ACTIVE');
+  let selectedTierId = $state(form?.sponsorTierId ?? data.business.sponsorTierId ?? '');
   let uploading = $state(false);
   let uploadError = $state('');
   let submitting = $state(false);
@@ -66,6 +66,7 @@
         <div class="field">
           <label class="label" for="sponsorTierId">Tier <span class="req">*</span></label>
           <select id="sponsorTierId" name="sponsorTierId" class="input" bind:value={selectedTierId} required>
+            <option value="" disabled>Select a tier…</option>
             {#each data.tiers as tier}
               <option value={tier.id}>{tier.name}</option>
             {/each}
@@ -74,7 +75,7 @@
 
         <div class="field">
           <label class="label" for="description">Description <span class="req">*</span></label>
-          <textarea id="description" name="description" class="input textarea" maxlength="500" required>{form?.description ?? data.business.description}</textarea>
+          <textarea id="description" name="description" class="input textarea" maxlength="500" required>{form?.description ?? data.business.description ?? ''}</textarea>
           <span class="hint">Max 500 characters. Shown on the public hub.</span>
         </div>
 

@@ -8,20 +8,21 @@ export const load: PageServerLoad = async ({ parent }) => {
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const [total, active, viewsThisMonth, recent] = await Promise.all([
-    prisma.business.count({ where: { clubId: club.id } }),
-    prisma.business.count({ where: { clubId: club.id, isActive: true } }),
+  const [active, archived, leads, viewsThisMonth, recent] = await Promise.all([
+    prisma.business.count({ where: { clubId: club.id, status: 'ACTIVE' } }),
+    prisma.business.count({ where: { clubId: club.id, status: 'ARCHIVED' } }),
+    prisma.business.count({ where: { clubId: club.id, status: 'LEAD' } }),
     prisma.clickEvent.count({
       where: { clubId: club.id, createdAt: { gte: monthStart } },
     }),
     prisma.business.findMany({
-      where: { clubId: club.id },
+      where: { clubId: club.id, status: { in: ['ACTIVE', 'ARCHIVED'] } },
       take: 4,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         name: true,
-        isActive: true,
+        status: true,
         logoUrl: true,
         sponsorTier: { select: { name: true } },
       },
@@ -29,7 +30,7 @@ export const load: PageServerLoad = async ({ parent }) => {
   ]);
 
   return {
-    stats: { total, active, inactive: total - active, viewsThisMonth },
+    stats: { total: active + archived, active, inactive: archived, leads, viewsThisMonth },
     recent,
   };
 };
