@@ -116,36 +116,12 @@
 
           <div class="row">
             <div class="field">
-              <label for="contactName">Your name <span class="req">*</span></label>
-              <input
-                id="contactName"
-                name="contactName"
-                type="text"
-                maxlength="120"
-                required
-                value={form?.contactName ?? ''}
-              />
-            </div>
-            <div class="field">
-              <label for="email">Email <span class="req">*</span></label>
+              <label for="email">Business email <span class="req">*</span></label>
               <input id="email" name="email" type="email" required value={form?.email ?? ''} />
             </div>
-          </div>
-
-          <div class="row">
             <div class="field">
               <label for="phone">Business phone <span class="opt">(optional)</span></label>
               <input id="phone" name="phone" type="tel" value={form?.phone ?? ''} />
-            </div>
-            <div class="field">
-              <label for="confirmationPhone">Follow-up phone <span class="opt">(optional)</span></label>
-              <input
-                id="confirmationPhone"
-                name="confirmationPhone"
-                type="tel"
-                value={form?.confirmationPhone ?? ''}
-              />
-              <span class="hint">The number we'll call to confirm — not shown publicly.</span>
             </div>
           </div>
 
@@ -158,6 +134,30 @@
               placeholder="https://"
               value={form?.websiteUrl ?? ''}
             />
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="contactName">Your name <span class="req">*</span></label>
+              <input
+                id="contactName"
+                name="contactName"
+                type="text"
+                maxlength="120"
+                required
+                value={form?.contactName ?? ''}
+              />
+            </div>
+            <div class="field">
+              <label for="confirmationPhone">Follow-up phone <span class="opt">(optional)</span></label>
+              <input
+                id="confirmationPhone"
+                name="confirmationPhone"
+                type="tel"
+                value={form?.confirmationPhone ?? ''}
+              />
+              <span class="hint">The number we'll call to confirm — not shown publicly.</span>
+            </div>
           </div>
 
           {#if data.tiers.length > 0}

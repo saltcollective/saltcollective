@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ parent, params }) => {
     prisma.business.findFirst({
       where: { id: params.id, clubId: club.id },
       select: {
-        id: true, name: true, description: true, email: true, phone: true,
+        id: true, name: true, contactName: true, description: true, email: true, phone: true,
         confirmationPhone: true, websiteUrl: true, logoUrl: true, status: true,
         sponsorTierId: true, message: true, source: true,
       },
@@ -46,6 +46,7 @@ export const actions: Actions = {
 
     const fd = await request.formData();
     const name = (fd.get('name') as string)?.trim();
+    const contactName = (fd.get('contactName') as string)?.trim() || null;
     const description = (fd.get('description') as string)?.trim();
     const sponsorTierId = (fd.get('sponsorTierId') as string)?.trim();
     const email = (fd.get('email') as string)?.trim() || null;
@@ -78,6 +79,7 @@ export const actions: Actions = {
       where: { id: params.id },
       data: {
         name,
+        contactName,
         description,
         sponsorTierId,
         email,

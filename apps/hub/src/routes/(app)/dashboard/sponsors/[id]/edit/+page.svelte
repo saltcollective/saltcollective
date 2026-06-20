@@ -83,17 +83,30 @@
           {/if}
         </div>
 
-        <div class="field">
-          <label class="label" for="name">Name <span class="req">*</span></label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            class="input"
-            value={form?.name ?? data.business.name}
-            maxlength="120"
-            required
-          />
+        <div class="field-row">
+          <div class="field">
+            <label class="label" for="name">Business name <span class="req">*</span></label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              class="input"
+              value={form?.name ?? data.business.name}
+              maxlength="120"
+              required
+            />
+          </div>
+          <div class="field">
+            <label class="label" for="contactName">Contact name <span class="opt">(optional)</span></label>
+            <input
+              id="contactName"
+              name="contactName"
+              type="text"
+              class="input"
+              value={data.business.contactName ?? ''}
+              maxlength="120"
+            />
+          </div>
         </div>
 
         <div class="field">
