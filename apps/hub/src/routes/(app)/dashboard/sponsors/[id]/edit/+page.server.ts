@@ -10,7 +10,8 @@ export const load: PageServerLoad = async ({ parent, params }) => {
       where: { id: params.id, clubId: club.id },
       select: {
         id: true, name: true, description: true, email: true, phone: true,
-        websiteUrl: true, logoUrl: true, status: true, sponsorTierId: true,
+        confirmationPhone: true, websiteUrl: true, logoUrl: true, status: true,
+        sponsorTierId: true, message: true, source: true,
       },
     }),
     prisma.sponsorTier.findMany({
@@ -49,8 +50,10 @@ export const actions: Actions = {
     const sponsorTierId = (fd.get('sponsorTierId') as string)?.trim();
     const email = (fd.get('email') as string)?.trim() || null;
     const phone = (fd.get('phone') as string)?.trim() || null;
+    const confirmationPhone = (fd.get('confirmationPhone') as string)?.trim() || null;
     const websiteUrl = (fd.get('websiteUrl') as string)?.trim() || null;
     const logoUrl = (fd.get('logoUrl') as string)?.trim() || null;
+    const message = (fd.get('message') as string)?.trim() || null;
     const isActive = fd.get('isActive') === 'true';
 
     const base = { name, description, sponsorTierId, email, phone, websiteUrl };
@@ -79,8 +82,10 @@ export const actions: Actions = {
         sponsorTierId,
         email,
         phone,
+        confirmationPhone,
         websiteUrl,
         logoUrl,
+        message,
         status: isActive ? 'ACTIVE' : 'ARCHIVED',
       },
     });

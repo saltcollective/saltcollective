@@ -54,14 +54,16 @@ We also do not yet know how strong the demand for self-initiated sponsorship is.
 1. The public hub page (`(hub)/[slug]`) exposes a "Sponsor this club" entry point leading to a request form at `(hub)/[slug]/sponsor`.
 2. The form is **unauthenticated** and collects:
    - Business name (required)
+   - Business description (optional — shown on the hub once the lead is published)
    - Contact name (required)
    - Contact email (required)
-   - Contact phone (optional)
+   - Business phone (optional — the public number shown on the hub card)
+   - Follow-up phone (optional — private number the club calls to confirm; never shown publicly)
    - Website URL (optional)
-   - Business logo (optional — reuses the existing presigned S3 upload flow)
    - Desired sponsor tier (optional — chosen from the club's configured tiers)
    - Desired spend (optional)
    - Message / notes (optional)
+   - Logo is **not** collected on the public form (the upload endpoint requires auth); the admin adds a logo when publishing the lead.
 3. The form is protected against spam/abuse by reCAPTCHA (see [reCAPTCHA setup](#recaptcha-setup) below) plus a server-side honeypot field.
 4. On submit, the server creates a `Business` record with `status = LEAD` scoped to the club, and records the desired tier/spend and message.
 5. A lead is **never** returned by the public hub query — only `status = ACTIVE` businesses render publicly.
@@ -83,12 +85,14 @@ enum BusinessStatus {
 
 model Business {
   // ... existing fields ...
-  status        BusinessStatus @default(ACTIVE)  // replaces `isActive`
-  sponsorTierId String?        // now nullable — a lead has a *desired* tier
-  contactName   String?        // person who submitted the request
-  desiredSpend  Decimal?       @db.Decimal(10, 2)
-  message       String?        // free-text note from the requester
-  source        String?        // e.g. "sponsor-request" vs admin-created
+  status            BusinessStatus @default(ACTIVE)  // replaces `isActive`
+  sponsorTierId     String?        // now nullable — a lead has a *desired* tier
+  description       String?        // now nullable — a lead may not provide one
+  contactName       String?        // person who submitted the request
+  confirmationPhone String?        // private follow-up number (not the public phone)
+  desiredSpend      Decimal?       @db.Decimal(10, 2)
+  message           String?        // free-text note from the requester
+  source            String?        // "sponsor-request" vs "admin" — surfaced read-only on the edit screen
 }
 ```
 

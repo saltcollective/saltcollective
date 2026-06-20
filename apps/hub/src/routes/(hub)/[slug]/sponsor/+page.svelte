@@ -106,6 +106,14 @@
             />
           </div>
 
+          <div class="field">
+            <label for="description">Business description <span class="opt">(optional)</span></label>
+            <textarea id="description" name="description" maxlength="500" rows="3"
+              >{form?.description ?? ''}</textarea
+            >
+            <span class="hint">A short description of your business — shown on the hub once approved.</span>
+          </div>
+
           <div class="row">
             <div class="field">
               <label for="contactName">Your name <span class="req">*</span></label>
@@ -126,19 +134,30 @@
 
           <div class="row">
             <div class="field">
-              <label for="phone">Phone <span class="opt">(optional)</span></label>
+              <label for="phone">Business phone <span class="opt">(optional)</span></label>
               <input id="phone" name="phone" type="tel" value={form?.phone ?? ''} />
             </div>
             <div class="field">
-              <label for="websiteUrl">Website <span class="opt">(optional)</span></label>
+              <label for="confirmationPhone">Follow-up phone <span class="opt">(optional)</span></label>
               <input
-                id="websiteUrl"
-                name="websiteUrl"
-                type="url"
-                placeholder="https://"
-                value={form?.websiteUrl ?? ''}
+                id="confirmationPhone"
+                name="confirmationPhone"
+                type="tel"
+                value={form?.confirmationPhone ?? ''}
               />
+              <span class="hint">The number we'll call to confirm — not shown publicly.</span>
             </div>
+          </div>
+
+          <div class="field">
+            <label for="websiteUrl">Website <span class="opt">(optional)</span></label>
+            <input
+              id="websiteUrl"
+              name="websiteUrl"
+              type="url"
+              placeholder="https://"
+              value={form?.websiteUrl ?? ''}
+            />
           </div>
 
           {#if data.tiers.length > 0}
@@ -279,6 +298,12 @@
   .opt {
     font-weight: 400;
     color: var(--color-text-muted);
+  }
+
+  .hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: var(--leading-normal);
   }
 
   .field input,

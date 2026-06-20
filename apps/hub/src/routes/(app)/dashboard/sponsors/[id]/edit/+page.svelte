@@ -17,14 +17,21 @@
   async function handleLogoChange(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { uploadError = 'File must be under 2 MB'; return; }
+    if (file.size > 2 * 1024 * 1024) {
+      uploadError = 'File must be under 2 MB';
+      return;
+    }
     uploading = true;
     uploadError = '';
     try {
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contentType: file.type, folder: 'businesses', id: data.business.id }),
+        body: JSON.stringify({
+          contentType: file.type,
+          folder: 'businesses',
+          id: data.business.id,
+        }),
       });
       if (!res.ok) throw new Error();
       const { uploadUrl, publicUrl } = await res.json();
@@ -47,7 +54,10 @@
       action="?/update"
       use:enhance={() => {
         submitting = true;
-        return ({ update }) => { update(); submitting = false; };
+        return ({ update }) => {
+          update();
+          submitting = false;
+        };
       }}
     >
       <input type="hidden" name="logoUrl" value={logoUrl} />
@@ -58,14 +68,43 @@
       {/if}
 
       <div class="fields">
+        <div class="origin">
+          <span class="origin-label">Origin</span>
+          <span class="origin-value">
+            {data.business.source === 'sponsor-request'
+              ? 'Submitted via the public sponsor request form'
+              : 'Added in the admin'}
+          </span>
+          {#if data.business.source === 'sponsor-request'}
+            <span class="hint"
+              >Make sure this person has confirmed their business details and paid their sponsorship
+              before making active.</span
+            >
+          {/if}
+        </div>
+
         <div class="field">
           <label class="label" for="name">Name <span class="req">*</span></label>
-          <input id="name" name="name" type="text" class="input" value={form?.name ?? data.business.name} maxlength="120" required />
+          <input
+            id="name"
+            name="name"
+            type="text"
+            class="input"
+            value={form?.name ?? data.business.name}
+            maxlength="120"
+            required
+          />
         </div>
 
         <div class="field">
           <label class="label" for="sponsorTierId">Tier <span class="req">*</span></label>
-          <select id="sponsorTierId" name="sponsorTierId" class="input" bind:value={selectedTierId} required>
+          <select
+            id="sponsorTierId"
+            name="sponsorTierId"
+            class="input"
+            bind:value={selectedTierId}
+            required
+          >
             <option value="" disabled>Select a tier…</option>
             {#each data.tiers as tier}
               <option value={tier.id}>{tier.name}</option>
@@ -75,24 +114,74 @@
 
         <div class="field">
           <label class="label" for="description">Description <span class="req">*</span></label>
-          <textarea id="description" name="description" class="input textarea" maxlength="500" required>{form?.description ?? data.business.description ?? ''}</textarea>
+          <textarea
+            id="description"
+            name="description"
+            class="input textarea"
+            maxlength="500"
+            required>{form?.description ?? data.business.description ?? ''}</textarea
+          >
           <span class="hint">Max 500 characters. Shown on the public hub.</span>
         </div>
 
         <div class="field-row">
           <div class="field">
             <label class="label" for="email">Email <span class="opt">(optional)</span></label>
-            <input id="email" name="email" type="email" class="input" value={form?.email ?? data.business.email ?? ''} />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              class="input"
+              value={form?.email ?? data.business.email ?? ''}
+            />
           </div>
           <div class="field">
-            <label class="label" for="phone">Phone <span class="opt">(optional)</span></label>
-            <input id="phone" name="phone" type="tel" class="input" value={form?.phone ?? data.business.phone ?? ''} />
+            <label class="label" for="phone"
+              >Business phone <span class="opt">(optional)</span></label
+            >
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              class="input"
+              value={form?.phone ?? data.business.phone ?? ''}
+            />
           </div>
         </div>
 
         <div class="field">
+          <label class="label" for="confirmationPhone"
+            >Follow-up phone <span class="opt">(optional)</span></label
+          >
+          <input
+            id="confirmationPhone"
+            name="confirmationPhone"
+            type="tel"
+            class="input"
+            value={data.business.confirmationPhone ?? ''}
+          />
+          <span class="hint">Private number to call when confirming — not shown on the hub.</span>
+        </div>
+
+        <div class="field">
+          <label class="label" for="message"
+            >Request message <span class="opt">(from the requester)</span></label
+          >
+          <textarea id="message" name="message" class="input textarea" maxlength="800"
+            >{data.business.message ?? ''}</textarea
+          >
+        </div>
+
+        <div class="field">
           <label class="label" for="websiteUrl">Website <span class="opt">(optional)</span></label>
-          <input id="websiteUrl" name="websiteUrl" type="url" class="input" value={form?.websiteUrl ?? data.business.websiteUrl ?? ''} placeholder="https://" />
+          <input
+            id="websiteUrl"
+            name="websiteUrl"
+            type="url"
+            class="input"
+            value={form?.websiteUrl ?? data.business.websiteUrl ?? ''}
+            placeholder="https://"
+          />
         </div>
 
         <div class="field">
@@ -102,10 +191,18 @@
               <img src={logoUrl} alt="Logo preview" class="logo-preview" />
             {:else}
               <div class="logo-placeholder" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <path d="M21 15l-5-5L5 21"/>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
                 </svg>
               </div>
             {/if}
@@ -168,7 +265,10 @@
           return;
         }
         deleting = true;
-        return ({ update }) => { update(); deleting = false; };
+        return ({ update }) => {
+          update();
+          deleting = false;
+        };
       }}
     >
       <Button variant="destructive" type="submit" disabled={deleting}>
@@ -219,8 +319,36 @@
     color: var(--color-text);
   }
 
-  .req { color: var(--color-destructive); }
-  .opt { font-weight: 400; color: var(--color-text-muted); }
+  .req {
+    color: var(--color-destructive);
+  }
+  .opt {
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+
+  .origin {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .origin-label {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+  }
+
+  .origin-value {
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
 
   .input {
     background: var(--color-bg);
@@ -232,7 +360,9 @@
     color: var(--color-text);
     width: 100%;
     box-sizing: border-box;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   .input:focus {
@@ -241,10 +371,19 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
 
-  .textarea { resize: vertical; min-height: 100px; }
+  .textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
 
-  .hint { font-size: var(--text-xs); color: var(--color-text-muted); }
-  .field-error { font-size: var(--text-xs); color: var(--color-destructive); }
+  .hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+  .field-error {
+    font-size: var(--text-xs);
+    color: var(--color-destructive);
+  }
 
   .form-error {
     background: color-mix(in srgb, var(--color-destructive) 10%, transparent);
@@ -308,7 +447,9 @@
     transition: background-color 0.15s ease;
   }
 
-  .upload-btn:hover { background: var(--color-surface); }
+  .upload-btn:hover {
+    background: var(--color-surface);
+  }
 
   .file-input {
     position: absolute;
@@ -337,7 +478,9 @@
     flex-shrink: 0;
   }
 
-  .toggle.on { background: var(--color-accent); }
+  .toggle.on {
+    background: var(--color-accent);
+  }
 
   .toggle-thumb {
     position: absolute;
@@ -350,7 +493,9 @@
     transition: transform 0.2s ease;
   }
 
-  .toggle.on .toggle-thumb { transform: translateX(18px); }
+  .toggle.on .toggle-thumb {
+    transform: translateX(18px);
+  }
 
   .toggle-label {
     font-size: var(--text-sm);
@@ -387,7 +532,11 @@
   }
 
   @media (max-width: 820px) {
-    .screen { padding: var(--space-6) var(--space-4); }
-    .field-row { grid-template-columns: 1fr; }
+    .screen {
+      padding: var(--space-6) var(--space-4);
+    }
+    .field-row {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

@@ -35,12 +35,24 @@ export const actions: Actions = {
     const contactName = (fd.get('contactName') as string)?.trim();
     const email = (fd.get('email') as string)?.trim();
     const phone = (fd.get('phone') as string)?.trim() || null;
+    const confirmationPhone = (fd.get('confirmationPhone') as string)?.trim() || null;
     const websiteUrl = (fd.get('websiteUrl') as string)?.trim() || null;
+    const description = (fd.get('description') as string)?.trim() || null;
     const desiredTierId = (fd.get('desiredTierId') as string)?.trim() || null;
     const desiredSpendRaw = (fd.get('desiredSpend') as string)?.trim() || null;
     const message = (fd.get('message') as string)?.trim() || null;
 
-    const values = { businessName, contactName, email, phone, websiteUrl, desiredTierId, message };
+    const values = {
+      businessName,
+      contactName,
+      email,
+      phone,
+      confirmationPhone,
+      websiteUrl,
+      description,
+      desiredTierId,
+      message,
+    };
 
     // Honeypot — a hidden field real users never fill. If populated, pretend
     // success so bots don't learn they were caught.
@@ -106,9 +118,11 @@ export const actions: Actions = {
         clubId: club.id,
         sponsorTierId,
         name: businessName,
+        description,
         contactName,
         email,
         phone,
+        confirmationPhone,
         websiteUrl,
         desiredSpend,
         message,
@@ -136,7 +150,9 @@ export const actions: Actions = {
         contactName,
         email,
         phone,
+        confirmationPhone,
         websiteUrl,
+        description,
         desiredTier: desiredTierName,
         desiredSpend: desiredSpend != null ? `$${desiredSpend.toLocaleString()}` : null,
         message,

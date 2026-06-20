@@ -15,6 +15,7 @@ export const load: PageServerLoad = async ({ parent }) => {
         status: true,
         email: true,
         phone: true,
+        confirmationPhone: true,
         websiteUrl: true,
         logoUrl: true,
         contactName: true,

@@ -97,6 +97,7 @@
                       <div class="leadMeta">
                         {#if business.contactName}<span>{business.contactName}</span>{/if}
                         {#if business.email}<span>{business.email}</span>{/if}
+                        {#if business.confirmationPhone}<span>☎ {business.confirmationPhone}</span>{/if}
                         {#if business.desiredSpend != null}<span>Budget: {moneyFmt.format(business.desiredSpend)}</span>{/if}
                       </div>
                       {#if business.message}<p class="leadMsg">“{business.message}”</p>{/if}

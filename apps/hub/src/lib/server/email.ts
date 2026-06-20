@@ -73,7 +73,9 @@ export async function sendSponsorRequestEmail(opts: {
   contactName?: string | null;
   email?: string | null;
   phone?: string | null;
+  confirmationPhone?: string | null;
   websiteUrl?: string | null;
+  description?: string | null;
   desiredTier?: string | null;
   desiredSpend?: string | null;
   message?: string | null;
@@ -115,9 +117,11 @@ export async function sendSponsorRequestEmail(opts: {
           </p>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #2a2a2a;margin-bottom:28px;">
             ${row('Business', opts.businessName)}
+            ${row('Description', opts.description)}
             ${row('Contact', opts.contactName)}
             ${row('Email', opts.email)}
-            ${row('Phone', opts.phone)}
+            ${row('Business phone', opts.phone)}
+            ${row('Follow-up phone', opts.confirmationPhone)}
             ${row('Website', opts.websiteUrl)}
             ${row('Desired tier', opts.desiredTier)}
             ${row('Desired spend', opts.desiredSpend)}

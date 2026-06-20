@@ -129,11 +129,12 @@ model Business {
   phone         String?
   email         String?
   websiteUrl    String?
-  status        BusinessStatus @default(ACTIVE)
-  contactName   String? // person who submitted a sponsor request
-  desiredSpend  Decimal?       @db.Decimal(10, 2)
-  message       String? // free-text note from a sponsor request
-  source        String? // e.g. "sponsor-request" vs admin-created
+  status            BusinessStatus @default(ACTIVE)
+  contactName       String? // person who submitted a sponsor request
+  confirmationPhone String? // private follow-up number for the club to call (not the public business phone)
+  desiredSpend      Decimal?       @db.Decimal(10, 2)
+  message           String? // free-text note from a sponsor request
+  source            String? // e.g. "sponsor-request" vs admin-created
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
