@@ -3,7 +3,7 @@ import { prisma } from '@saltcollective/schema';
 import { sendInviteEmail } from '$lib/server/email';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ parent }) => {
+export const load: PageServerLoad = async ({ parent, locals }) => {
   const { club, role } = await parent();
   if (role !== 'ADMIN') error(403, 'Admin access required');
 
@@ -25,11 +25,11 @@ export const load: PageServerLoad = async ({ parent }) => {
     }),
   ]);
 
-  return { members, invites };
+  return { members, invites, currentUserId: locals.user?.id ?? null };
 };
 
 export const actions: Actions = {
-  invite: async ({ request, locals, url, parent }) => {
+  invite: async ({ request, locals, url }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
     const membership = await prisma.clubMembership.findFirst({
@@ -102,5 +102,80 @@ export const actions: Actions = {
     });
 
     return { action: 'revoke' as const, success: true };
+  },
+
+  updateRole: async ({ request, locals }) => {
+    if (!locals.user) redirect(302, '/sign-in');
+
+    const membership = await prisma.clubMembership.findFirst({
+      where: { userId: locals.user.id, role: 'ADMIN' },
+      select: { club: { select: { id: true } } },
+    });
+    if (!membership) return fail(403, { action: 'role' as const, error: 'Admin access required' });
+
+    const clubId = membership.club.id;
+    const fd = await request.formData();
+    const membershipId = fd.get('membershipId') as string;
+    const rawRole = fd.get('role') as string;
+    const role = rawRole === 'ADMIN' || rawRole === 'EDITOR' ? rawRole : null;
+    if (!membershipId || !role) {
+      return fail(400, { action: 'role' as const, error: 'Invalid request' });
+    }
+
+    const target = await prisma.clubMembership.findFirst({
+      where: { id: membershipId, clubId },
+      select: { id: true, role: true },
+    });
+    if (!target) return fail(404, { action: 'role' as const, error: 'Member not found' });
+
+    // A hub must always keep at least one admin — block demoting the last one.
+    if (target.role === 'ADMIN' && role === 'EDITOR') {
+      const adminCount = await prisma.clubMembership.count({ where: { clubId, role: 'ADMIN' } });
+      if (adminCount <= 1) {
+        return fail(400, { action: 'role' as const, error: 'Your hub needs at least one admin' });
+      }
+    }
+
+    if (target.role !== role) {
+      await prisma.clubMembership.update({ where: { id: target.id }, data: { role } });
+    }
+
+    return { action: 'role' as const, success: true };
+  },
+
+  removeMember: async ({ request, locals }) => {
+    if (!locals.user) redirect(302, '/sign-in');
+
+    const membership = await prisma.clubMembership.findFirst({
+      where: { userId: locals.user.id, role: 'ADMIN' },
+      select: { club: { select: { id: true } } },
+    });
+    if (!membership) return fail(403, { action: 'remove' as const, error: 'Admin access required' });
+
+    const clubId = membership.club.id;
+    const fd = await request.formData();
+    const membershipId = fd.get('membershipId') as string;
+    if (!membershipId) return fail(400, { action: 'remove' as const, error: 'Invalid request' });
+
+    const target = await prisma.clubMembership.findFirst({
+      where: { id: membershipId, clubId },
+      select: { id: true, role: true, userId: true },
+    });
+    if (!target) return fail(404, { action: 'remove' as const, error: 'Member not found' });
+
+    if (target.userId === locals.user.id) {
+      return fail(400, { action: 'remove' as const, error: "You can't remove yourself" });
+    }
+
+    if (target.role === 'ADMIN') {
+      const adminCount = await prisma.clubMembership.count({ where: { clubId, role: 'ADMIN' } });
+      if (adminCount <= 1) {
+        return fail(400, { action: 'remove' as const, error: 'Your hub needs at least one admin' });
+      }
+    }
+
+    await prisma.clubMembership.delete({ where: { id: target.id } });
+
+    return { action: 'remove' as const, success: true };
   },
 };

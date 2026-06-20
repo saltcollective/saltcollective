@@ -17,40 +17,38 @@ deno task --tunnel dev
 
 ## Database workflow
 
-### During active development (schema still changing)
+Every schema change follows the same four steps — always create a migration file.
 
-Use `db:push` to sync schema changes directly to the database without creating migration files. Fast, no history.
+### 1. Edit the model
 
-```sh
-deno task db:push
-```
+Update `packages/schema/prisma/schema.prisma`.
 
-### When the schema is ready to ship
-
-Once the schema is stable and you're ready for a production deployment, generate a migration file:
+### 2. Create and apply the migration on dev
 
 ```sh
 deno task --tunnel db:migrate
 ```
 
-Prisma will diff the current schema against the last migration and prompt you to name the new migration. This creates a SQL file under `packages/schema/prisma/migrations/`.
+Prisma diffs the current schema against the last migration, prompts you to name the new migration, writes a SQL file under `packages/schema/prisma/migrations/`, and applies it to the dev database. The `--tunnel` flag injects the database connection env vars.
 
-Commit the generated migration file — the deploy hook runs `db:migrate:deploy` on every production deployment to apply it.
+### 3. Commit and push
 
-### Rules of thumb
+Commit the generated migration file **together with** the schema change and push to `main`.
 
-- Use `db:push` freely while modelling — it won't clutter the migrations folder
-- Switch to `db:migrate` when you're about to deploy a schema change to production
-- Never run `db:push` against production — always use `db:migrate:deploy` there (the deploy hook handles this)
-- If you've been using `db:push` and need to ship accumulated changes, run `db:migrate` once to capture everything in a single migration file before deploying
+### 4. CD deploys it
 
----
-
-## Deployment
-
-Deployments are triggered automatically by pushing to `main`. The deploy hook runs:
+Pushing to `main` triggers deployment. The deploy hook runs:
 
 1. `prisma generate` — regenerates the Prisma client
-2. `prisma migrate deploy` — applies any pending migration files to the production database
+2. `deno task db:migrate:deploy` (`prisma migrate deploy`) — applies any pending migration files to the production database
 
-No manual steps needed as long as a migration file exists for the schema changes being deployed.
+No `--tunnel` in CD — Deno Deploy injects the env automatically. No manual steps as long as the migration file is committed.
+
+### `db:push` — escape hatch only
+
+`db:push` syncs the schema directly with **no migration file** and causes migration-history drift. Use it only for a throwaway/fresh dev environment where data loss is acceptable — never as part of the normal workflow above, and never against production.
+
+```sh
+# Reset the dev DB and replay all migrations from scratch (wipes data, fixes drift)
+deno task --tunnel db:migrate:reset
+```

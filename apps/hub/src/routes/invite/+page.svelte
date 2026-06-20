@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
+  import { deserialize } from '$app/forms';
+  import type { ActionResult } from '@sveltejs/kit';
   import type { PageData, ActionData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -30,39 +32,41 @@
       return;
     }
 
-    // Signed in — submit the accept form programmatically
+    // Signed in — submit the accept action programmatically. The
+    // `x-sveltekit-action` header tells SvelteKit to return a serialized
+    // ActionResult (redirect / failure / error) rather than re-rendering HTML.
     const fd = new FormData();
     fd.set('token', token);
 
-    const res = await fetch('?/accept', { method: 'POST', body: fd });
+    const res = await fetch('?/accept', {
+      method: 'POST',
+      headers: { 'x-sveltekit-action': 'true' },
+      body: fd,
+    });
 
-    if (res.redirected) {
+    const result: ActionResult = deserialize(await res.text());
+
+    if (result.type === 'redirect') {
       localStorage.removeItem(STORAGE_KEY);
-      goto(new URL(res.url).pathname);
+      goto(result.location);
       return;
     }
 
-    // SvelteKit returns a 200 with JSON payload for form action results (including redirects on some adapters)
-    try {
-      const json = await res.json();
-      if (json?.type === 'redirect') {
-        localStorage.removeItem(STORAGE_KEY);
-        goto(json.location);
-        return;
-      }
-      if (json?.data?.error) {
-        errorMsg = json.data.error;
-        status = 'error';
-        return;
-      }
-    } catch {
-      // ignore parse errors
+    if (result.type === 'success') {
+      localStorage.removeItem(STORAGE_KEY);
+      goto('/dashboard');
+      return;
     }
 
-    if (!res.ok) {
-      errorMsg = 'Something went wrong. Please try again or contact support.';
+    if (result.type === 'failure') {
+      errorMsg = (result.data?.error as string) ?? 'This invite could not be accepted.';
       status = 'error';
+      return;
     }
+
+    // result.type === 'error'
+    errorMsg = result.error?.message ?? 'Something went wrong. Please try again or contact support.';
+    status = 'error';
   });
 </script>
 

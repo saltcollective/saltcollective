@@ -16,28 +16,25 @@ Prisma schema lives in `packages/schema/prisma/schema.prisma`. Each model is doc
 
 ## Database workflow
 
-### `db:push` vs `db:migrate`
+Every schema change is shipped as a migration file. The canonical four-step process:
 
-**`db:push`** syncs the schema directly to the database with no migration files created. Fast, no history, no tracking — Prisma will drop and recreate whatever it needs to match the schema. Use this during active data modelling while the schema is still being shaped.
-
-**`db:migrate`** (`prisma migrate dev`) generates a SQL migration file under `prisma/migrations/`, applies it, and records it in `_prisma_migrations`. Builds a history of every schema change. When deploying to production you run `migrate deploy`, which replays that history in order.
-
-Switch from `db:push` to `db:migrate` once the schema stabilises and you're approaching a first real deployment.
+1. **Edit the model** in `packages/schema/prisma/schema.prisma`.
+2. **Create + apply the migration on dev** — `deno task --tunnel db:migrate` generates a SQL migration file under `prisma/migrations/`, applies it to the dev database, and records it in `_prisma_migrations`.
+3. **Commit the migration file** with the schema change and **push to `main`**.
+4. **CD deploys it** — the deploy hook runs `prisma generate` then `deno task db:migrate:deploy` (`prisma migrate deploy`), replaying any pending migrations against production in order.
 
 ### Running commands
 
 Tasks are defined in `packages/schema/deno.json` and proxied from the root `deno.json`:
 
 ```sh
-deno task db:push        # sync schema to DB (no migration files)
-deno task db:migrate     # generate + apply a migration
-deno task db:studio      # open Prisma Studio (requires --tunnel)
+deno task --tunnel db:migrate         # generate + apply a migration on dev
+deno task --tunnel db:migrate:reset   # wipe dev DB + replay all migrations
+deno task --tunnel db:studio          # open Prisma Studio
 ```
 
-Operations that make direct TCP connections (Studio, some migration tooling) need the `--tunnel` flag:
+Local migration commands need the `--tunnel` flag to inject `DATABASE_URL`/`PRISMA_URL`. In CD, `db:migrate:deploy` runs **without** `--tunnel` because Deno Deploy injects the env automatically.
 
-```sh
-deno task --tunnel db:migrate
-```
+### `db:push` — escape hatch only
 
-Prisma Postgres connects via HTTP through Accelerate and does not need the tunnel for push or deploy operations.
+**`db:push`** syncs the schema directly with **no migration file** and causes migration-history drift — Prisma drops/recreates whatever it needs to match the schema. Use it only for a throwaway/fresh dev environment where data loss is acceptable, never in the normal workflow above and never against production.

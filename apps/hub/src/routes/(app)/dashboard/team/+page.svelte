@@ -12,6 +12,16 @@
 
   const inviteSuccess = $derived(form?.action === 'invite' && form?.success);
   const inviteError = $derived(form?.action === 'invite' && 'error' in form ? form.error : null);
+
+  const memberError = $derived(
+    form && (form.action === 'role' || form.action === 'remove') && 'error' in form
+      ? form.error
+      : null
+  );
+
+  function memberName(member: PageData['members'][number]): string {
+    return member.user.username ?? member.user.email.split('@')[0];
+  }
 </script>
 
 <div class="screen">
@@ -26,28 +36,64 @@
           <th>Member</th>
           <th>Role</th>
           <th>Joined</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {#each data.members as member}
+          {@const isSelf = member.user.id === data.currentUserId}
           <tr>
             <td>
               <div class="rowMain">
                 <div class="avatar">{(member.user.username ?? member.user.email)[0].toUpperCase()}</div>
                 <div class="rowMeta">
-                  <span class="rowTitle">{member.user.username ?? member.user.email.split('@')[0]}</span>
+                  <span class="rowTitle">
+                    {memberName(member)}{#if isSelf}<span class="youTag">You</span>{/if}
+                  </span>
                   <span class="rowSub">{member.user.email}</span>
                 </div>
               </div>
             </td>
             <td>
-              <Badge variant={member.role === 'ADMIN' ? 'success' : 'default'}>{member.role}</Badge>
+              <form method="POST" action="?/updateRole" use:enhance>
+                <input type="hidden" name="membershipId" value={member.id} />
+                <select
+                  class="roleSelect"
+                  name="role"
+                  aria-label="Role for {memberName(member)}"
+                  onchange={(e) => e.currentTarget.form?.requestSubmit()}
+                >
+                  <option value="EDITOR" selected={member.role === 'EDITOR'}>Editor</option>
+                  <option value="ADMIN" selected={member.role === 'ADMIN'}>Admin</option>
+                </select>
+              </form>
             </td>
             <td class="muted">{new Date(member.createdAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+            <td class="actionCell">
+              {#if !isSelf}
+                <form
+                  method="POST"
+                  action="?/removeMember"
+                  use:enhance={({ cancel }) => {
+                    if (!confirm(`Remove ${memberName(member)} from this hub?`)) {
+                      cancel();
+                      return;
+                    }
+                    return ({ update }) => update();
+                  }}
+                >
+                  <input type="hidden" name="membershipId" value={member.id} />
+                  <Button variant="ghost" size="sm" type="submit">Remove</Button>
+                </form>
+              {/if}
+            </td>
           </tr>
         {/each}
       </tbody>
     </table>
+    {#if memberError}
+      <p class="feedback error memberFeedback">{memberError}</p>
+    {/if}
   </section>
 
   <!-- Pending invites -->
@@ -214,6 +260,42 @@
 
   .actionCell {
     text-align: right;
+  }
+
+  .youTag {
+    display: inline-block;
+    margin-left: var(--space-2);
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+
+  .roleSelect {
+    height: 32px;
+    padding: 0 var(--space-2);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .roleSelect:focus {
+    border-color: var(--color-accent);
+  }
+
+  .memberFeedback {
+    padding: var(--space-3) var(--space-5) var(--space-4);
   }
 
   .avatar {
