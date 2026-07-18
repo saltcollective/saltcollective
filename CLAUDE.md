@@ -178,7 +178,7 @@ The `(app)` group is restricted to authenticated users who have at least one `Cl
 - `ADMIN` — full access: sponsors, tiers, analytics, embed, settings
 - `EDITOR` — can add/edit businesses; should not access tiers or settings screens
 
-Role-based guards on individual screens are not yet built. When adding a restricted screen (e.g. settings), check `role` from the parent layout data and throw `error(403)` if the user's role is insufficient:
+Role-based guards are enforced on `tiers`, `team` and `settings` — both in `load` (via `parent()` role) and in every form action (via a scoped `clubMembership.findFirst({ role: 'ADMIN' })`, since actions can't rely on the layout). The `(app)` layout also hides ADMIN-only nav items from EDITORs. When adding a restricted screen, follow the same pattern:
 ```typescript
 // In a page's +page.server.ts
 const { role } = await parent();
@@ -198,8 +198,9 @@ These are hub-specific and do not belong in `packages/ui`:
 
 | Component | Description |
 |---|---|
-| `Sidebar.svelte` | Nav (Dashboard → Settings), club mark + name in footer, slide-in drawer on mobile. Props: `club`, `activeRoute`, `open`, `onClose`. |
 | `PageHeader.svelte` | Page title + optional subtitle + optional `{#snippet action()}` slot. Used at the top of every hub screen. |
+
+The sidebar itself is `AppSidebar` from `@saltcollective/ui`, configured with nav sections inline in `(app)/+layout.svelte` (ADMIN-only items filtered by `data.role`).
 
 Full spec (current state, screen designs, to-do list): [`hub-dashboard.md`](hub-dashboard.md).
 
@@ -297,12 +298,11 @@ Last audited 2026-07-18. All screens exist; remaining work is depth, verificatio
 
 ### Priority — functional gaps
 1. **Stripe integration** — the onboarding payment step is a stub, and `/admin/billing` has no real revenue data. Biggest gap between "live hub" and "paying hub". Needs Stripe account/credentials before code.
-2. **Role guard on `dashboard/tiers`** — convention says EDITORs can't manage tiers, but the page has no 403 guard (only `settings` and `team` do). Also consider hiding ADMIN-only links in the sidebar for EDITORs.
-3. **Admin club management** — `/admin/clubs` is a read-only list. Needs actions: unpublish/suspend, delete, view detail.
-4. **Admin user management** — `/admin/users` is a read-only list. Needs actions: change `UserType`, suspend/delete.
-5. **Impersonation** — no way for a SITE_ADMIN to view/operate a club's hub as that club. Needed for support. Design carefully (audit trail, clear "impersonating" banner, scoped session).
-6. **Analytics export** — the Export button on `/admin/analytics` renders but has no handler. Implement CSV export; consider the same for club-facing `dashboard/analytics`.
-7. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
+2. **Admin club management** — `/admin/clubs` is a read-only list. Needs actions: unpublish/suspend, delete, view detail.
+3. **Admin user management** — `/admin/users` is a read-only list. Needs actions: change `UserType`, suspend/delete.
+4. **Impersonation** — no way for a SITE_ADMIN to view/operate a club's hub as that club. Needed for support. Design carefully (audit trail, clear "impersonating" banner, scoped session).
+5. **Analytics export** — the Export button on `/admin/analytics` renders but has no handler. Implement CSV export; consider the same for club-facing `dashboard/analytics`.
+6. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
 
 ### Verification
 - **End-to-end onboarding test** — the full sign-up → club → branding → tiers → payment → done flow has never been walked through. Needs `deno task --tunnel dev`.

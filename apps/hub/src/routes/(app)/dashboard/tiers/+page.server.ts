@@ -1,9 +1,10 @@
-import { redirect, fail } from '@sveltejs/kit';
+import { redirect, fail, error } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ parent }) => {
-  const { club } = await parent();
+  const { club, role } = await parent();
+  if (role !== 'ADMIN') error(403, 'Admin access required');
 
   const raw = await prisma.sponsorTier.findMany({
     where: { clubId: club.id },
@@ -31,10 +32,10 @@ export const actions: Actions = {
     if (!locals.user) redirect(302, '/sign-in');
 
     const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id },
+      where: { userId: locals.user.id, role: 'ADMIN' },
       select: { club: { select: { id: true } } },
     });
-    if (!membership) redirect(302, '/onboarding/club');
+    if (!membership) return fail(403, { error: 'Admin access required' });
 
     const clubId = membership.club.id;
     const fd = await request.formData();

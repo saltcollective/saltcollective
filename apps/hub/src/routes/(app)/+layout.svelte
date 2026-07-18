@@ -9,19 +9,24 @@
   let drawerOpen = $state(false);
   let collapsed = $state(false);
 
-  const navSections = [
+  // Tiers, Team and Settings are ADMIN-only (enforced server-side via 403 guards)
+  const navSections = $derived([
     {
       items: [
         { href: '/dashboard',           label: 'Dashboard', icon: 'grid',    exact: true },
         { href: '/dashboard/sponsors',  label: 'Sponsors',  icon: 'tag' },
-        { href: '/dashboard/tiers',     label: 'Tiers',     icon: 'layers' },
+        ...(data.role === 'ADMIN' ? [{ href: '/dashboard/tiers', label: 'Tiers', icon: 'layers' }] : []),
         { href: '/dashboard/analytics', label: 'Analytics', icon: 'chart' },
         { href: '/dashboard/embed',     label: 'Embed',     icon: 'code' },
-        { href: '/dashboard/team',      label: 'Team',      icon: 'users' },
-        { href: '/dashboard/settings',  label: 'Settings',  icon: 'sliders' },
+        ...(data.role === 'ADMIN'
+          ? [
+              { href: '/dashboard/team',     label: 'Team',     icon: 'users' },
+              { href: '/dashboard/settings', label: 'Settings', icon: 'sliders' },
+            ]
+          : []),
       ],
     },
-  ];
+  ]);
 </script>
 
 <div class="shell" class:collapsed class:drawerOpen>
