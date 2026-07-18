@@ -91,6 +91,8 @@
 .adm-card-tools { display: flex; gap: var(--space-2); }
 .adm-link { font-size: var(--text-sm); color: var(--color-accent); text-decoration: none; }
 .adm-link:hover { opacity: 0.85; }
+.adm-row-link { color: inherit; text-decoration: none; }
+.adm-row-link:hover { color: var(--color-accent); text-decoration: underline; }
 
 /* ---------- Grids ---------- */
 .adm-grid { display: grid; gap: var(--space-4); }

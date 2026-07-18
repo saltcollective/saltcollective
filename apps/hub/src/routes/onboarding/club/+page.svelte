@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ActionData } from './$types';
   import { enhance } from '$app/forms';
+  import { siteDomain } from '$lib/domain';
 
   let { form }: { form: ActionData } = $props();
 
@@ -71,7 +72,7 @@
     <div class="ob-field">
       <label class="ob-label" for="slug">Hub URL</label>
       <div class="slug-wrap" class:has-error={form?.slugTaken}>
-        <span class="slug-prefix">saltcollective.club/</span>
+        <span class="slug-prefix">{siteDomain}/</span>
         <input
           id="slug"
           name="slug"

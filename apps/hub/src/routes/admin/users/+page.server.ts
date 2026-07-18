@@ -14,7 +14,7 @@ export const load: PageServerLoad = async () => {
       memberships: {
         select: {
           role: true,
-          club: { select: { name: true } },
+          club: { select: { name: true, slug: true } },
         },
       },
     },

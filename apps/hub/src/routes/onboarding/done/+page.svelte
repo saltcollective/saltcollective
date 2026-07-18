@@ -1,10 +1,11 @@
 <script lang="ts">
+  import { siteDomain } from '$lib/domain';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
   let copied = $state(false);
-  const hubUrl = $derived(`saltcollective.club/${data.slug}`);
+  const hubUrl = $derived(`${siteDomain}/${data.slug}`);
 
   async function copyUrl() {
     await navigator.clipboard.writeText(`https://${hubUrl}`);

@@ -158,6 +158,10 @@ Key structure:
 
 All AWS env vars (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET`, `AWS_CLOUDFRONT_DOMAIN`) are set in the Deno Deploy dashboard. See `docs/infrastructure/file-storage.md` for full details.
 
+## Site Domain
+
+The public-facing domain is env-controlled so testing/UAT/production can differ: `PUBLIC_SITE_DOMAIN` (e.g. `saltcollective.com`, no protocol), set in the Deno Deploy dashboard per environment, falling back to `saltcollective.com` when unset. `apps/hub/src/lib/domain.ts` is the single source — it exports `siteDomain`, `siteUrl`, and `clubUrl(slug)`. Anywhere a hub/site URL is displayed or embedded (admin lists, embed page, marketing copy, email footers) must use these helpers — never hardcode the domain. In-app navigation links stay relative (`/{slug}`). The Resend `FROM` address in `email.ts` is intentionally not env-controlled — it's tied to the verified sending domain.
+
 ## Hub Admin App (`apps/hub/src/routes/(app)/`)
 
 Post-auth club admin interface. The `(app)` route group provides the hub shell — sidebar + main — and guards all child routes.
@@ -200,19 +204,22 @@ These are hub-specific and do not belong in `packages/ui`:
 Full spec (current state, screen designs, to-do list): [`hub-dashboard.md`](hub-dashboard.md).
 
 ### Screens built
+All dashboard screens are built:
 - `dashboard/` — four `Stat` cards (total, active, inactive, views this month) + recent sponsors list
-- `dashboard/sponsors/` — tier filter chips + business table; reflowed to card rows on mobile; Edit links to `/dashboard/sponsors/{id}/edit`
-
-### Screens not yet built
-- `dashboard/sponsors/new` — add sponsor form
-- `dashboard/sponsors/[id]/edit` — edit sponsor form
-- `dashboard/tiers/` — sponsor tier management
-- `dashboard/analytics/` — click event reporting
+- `dashboard/sponsors/` — tier filter chips + business table; reflowed to card rows on mobile
+- `dashboard/sponsors/new` + `dashboard/sponsors/[id]/edit` — full sponsor CRUD with logo upload
+- `dashboard/tiers/` — create, reorder, delete with sponsor count guards
+- `dashboard/analytics/` — stats summary + pure-SVG clicks-over-time bar chart
 - `dashboard/embed/` — embed code + shareable public hub link
-- `dashboard/settings/` — club settings (name, slug, tagline, colours, logo, danger zone)
+- `dashboard/settings/` — name, slug, tagline, colours, logo, danger zone (ADMIN-guarded)
+- `dashboard/team/` — members, role management, invites (send / resend / revoke) (ADMIN-guarded)
 
 ### Public hub page
-- `(hub)/[slug]/` — public-facing sponsor listing page (not yet built); spec in [`hub-dashboard.md`](hub-dashboard.md)
+- `(hub)/[slug]/` — public-facing sponsor listing with tier filtering, search, click tracking
+- `(hub)/[slug]/sponsor/` — sponsorship request form; emails club admins
+
+### Site admin (`/admin/*`)
+Restricted to `UserType.SITE_ADMIN`. Dashboard, clubs, users, analytics, billing, discount-codes screens exist — clubs and users are currently **read-only lists** (see Roadmap).
 
 ## Onboarding (`apps/hub/src/routes/onboarding/`)
 
@@ -283,3 +290,27 @@ This is the standard process for **every** schema change — always create a mig
 4. **CD deploys it.** The deploy hook runs `prisma generate`, then `deno task db:migrate:deploy` (`prisma migrate deploy`) applies any pending migration files to production. No `--tunnel` in CD — Deno Deploy injects the env automatically.
 
 `db:push` skips migration files and causes migration-history drift — only use it for a throwaway/fresh dev environment where data loss is acceptable, never as part of the normal workflow. A migration file must exist in the repo before pushing a schema change, or the deploy will not apply it.
+
+## Roadmap
+
+Last audited 2026-07-18. All screens exist; remaining work is depth, verification, and stubs.
+
+### Priority — functional gaps
+1. **Stripe integration** — the onboarding payment step is a stub, and `/admin/billing` has no real revenue data. Biggest gap between "live hub" and "paying hub". Needs Stripe account/credentials before code.
+2. **Role guard on `dashboard/tiers`** — convention says EDITORs can't manage tiers, but the page has no 403 guard (only `settings` and `team` do). Also consider hiding ADMIN-only links in the sidebar for EDITORs.
+3. **Admin club management** — `/admin/clubs` is a read-only list. Needs actions: unpublish/suspend, delete, view detail.
+4. **Admin user management** — `/admin/users` is a read-only list. Needs actions: change `UserType`, suspend/delete.
+5. **Impersonation** — no way for a SITE_ADMIN to view/operate a club's hub as that club. Needed for support. Design carefully (audit trail, clear "impersonating" banner, scoped session).
+6. **Analytics export** — the Export button on `/admin/analytics` renders but has no handler. Implement CSV export; consider the same for club-facing `dashboard/analytics`.
+7. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
+
+### Verification
+- **End-to-end onboarding test** — the full sign-up → club → branding → tiers → payment → done flow has never been walked through. Needs `deno task --tunnel dev`.
+- **Invite loop** — send/accept was manually tested; **resend** (added 2026-07-18) has only been type-checked. Verify email delivery and the extended expiry.
+
+### Housekeeping
+- 25 svelte-check warnings, mostly `state_referenced_locally` (capturing `data`/`form` in `$state` initializers instead of `$derived`).
+
+### Deferred (revisit when triggered)
+- **Sequential DB round-trips** — see [Known performance issue](#known-performance-issue--sequential-db-round-trips); monitor load times first.
+- **SvelteKit streaming** — blocked on Deno Deploy Pro plan for chunked responses.

@@ -1,10 +1,11 @@
 <script lang="ts">
   import PageHeader from '$lib/components/PageHeader.svelte';
+  import { clubUrl } from '$lib/domain';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
-  const hubUrl = $derived(`https://saltcollective.club/${data.club.slug}`);
+  const hubUrl = $derived(clubUrl(data.club.slug));
 
   // Sizing controls
   let widthMode = $state<'full' | 'fixed'>('full');

@@ -2,6 +2,7 @@
   import { Button } from '@saltcollective/ui';
   import PageHeader from '$lib/components/PageHeader.svelte';
   import { enhance } from '$app/forms';
+  import { siteDomain } from '$lib/domain';
   import type { PageData, ActionData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -129,7 +130,7 @@
         <div class="field">
           <label class="label" for="slug">Hub URL <span class="req">*</span></label>
           <div class="slug-wrap">
-            <span class="slug-prefix">saltcollective.club/</span>
+            <span class="slug-prefix">{siteDomain}/</span>
             <input
               id="slug"
               name="slug"

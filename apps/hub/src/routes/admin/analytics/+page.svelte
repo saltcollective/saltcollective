@@ -101,7 +101,11 @@
             <li class="adm-bar-row adm-bar-row-ranked">
               <div class="adm-bar-rank">{i + 1}</div>
               <div class="adm-bar-label">
-                <span class="adm-bar-name">{club.clubName}</span>
+                {#if club.clubSlug}
+                  <a class="adm-bar-name adm-row-link" href="/{club.clubSlug}" target="_blank" rel="noopener">{club.clubName}</a>
+                {:else}
+                  <span class="adm-bar-name">{club.clubName}</span>
+                {/if}
               </div>
               <div class="adm-bar-track">
                 <div class="adm-bar-fill" style="width: {(club.clicks / maxClicks) * 100}%"></div>

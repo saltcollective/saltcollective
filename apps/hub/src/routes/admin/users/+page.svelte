@@ -17,10 +17,6 @@
     return 'Member';
   }
 
-  function userClubs(user: (typeof data.users)[number]) {
-    return user.memberships.map((m) => m.club.name).join(', ') || '—';
-  }
-
   const filtered = $derived(
     data.users
       .filter((u) => {
@@ -134,7 +130,18 @@
                 {role}
               </span>
             </td>
-            <td class="adm-cell-muted">{userClubs(user)}</td>
+            <td class="adm-cell-muted">
+              {#if user.memberships.length === 0}
+                —
+              {:else}
+                {#each user.memberships as m, i}{#if i > 0}{', '}{/if}<a
+                    class="adm-row-link"
+                    href="/{m.club.slug}"
+                    target="_blank"
+                    rel="noopener">{m.club.name}</a
+                  >{/each}
+              {/if}
+            </td>
             <td>
               <span class="sc-badge {user.isActive ? 'sc-badge-success' : 'sc-badge-default'}">
                 {userStatus(user)}

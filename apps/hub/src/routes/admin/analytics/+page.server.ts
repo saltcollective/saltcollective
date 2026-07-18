@@ -29,13 +29,14 @@ export const load: PageServerLoad = async () => {
   const clubs = clubIds.length
     ? await prisma.club.findMany({
         where: { id: { in: clubIds } },
-        select: { id: true, name: true },
+        select: { id: true, name: true, slug: true },
       })
     : [];
 
   const topClubs = clicksByClub.map((c) => ({
     clubId: c.clubId,
     clubName: clubs.find((cl) => cl.id === c.clubId)?.name ?? 'Unknown',
+    clubSlug: clubs.find((cl) => cl.id === c.clubId)?.slug ?? null,
     clicks: c._count.id,
   }));
 

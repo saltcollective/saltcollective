@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { siteUrl } from '$lib/domain';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -157,7 +158,7 @@
   </main>
 
   <footer class="footer">
-    <a href="https://saltcollective.club" class="footer-link" aria-label="Powered by Salt Collective">
+    <a href={siteUrl} class="footer-link" aria-label="Powered by Salt Collective">
       <span class="footer-text">Powered by</span>
       <strong class="footer-brand">Salt Collective</strong>
     </a>

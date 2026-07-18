@@ -1,5 +1,6 @@
 import process from 'node:process';
 import { Resend } from 'resend';
+import { siteDomain, siteUrl } from '$lib/domain';
 
 const resend = new Resend(process.env.RESEND_KEY);
 const FROM = 'Salt Collective <invites@updates.saltcollective.com>';
@@ -48,7 +49,7 @@ export async function sendInviteEmail(opts: {
         </td></tr>
         <tr><td style="padding-top:24px;">
           <p style="margin:0;font-size:12px;color:#444;text-align:center;">
-            Salt Collective · <a href="https://saltcollective.com" style="color:#666;text-decoration:none;">saltcollective.com</a>
+            Salt Collective · <a href="${siteUrl}" style="color:#666;text-decoration:none;">${siteDomain}</a>
           </p>
         </td></tr>
       </table>
@@ -137,7 +138,7 @@ export async function sendSponsorRequestEmail(opts: {
         </td></tr>
         <tr><td style="padding-top:24px;">
           <p style="margin:0;font-size:12px;color:#444;text-align:center;">
-            Salt Collective · <a href="https://saltcollective.com" style="color:#666;text-decoration:none;">saltcollective.com</a>
+            Salt Collective · <a href="${siteUrl}" style="color:#666;text-decoration:none;">${siteDomain}</a>
           </p>
         </td></tr>
       </table>

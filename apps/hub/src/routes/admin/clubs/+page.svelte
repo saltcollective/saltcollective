@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { siteDomain } from '$lib/domain';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -102,7 +103,9 @@
                 <div class="adm-club-mark">{initials(club.name)}</div>
                 <div>
                   <div class="adm-row-title">{club.name}</div>
-                  <div class="adm-row-sub">salt.club/{club.slug}</div>
+                  <div class="adm-row-sub">
+                    <a class="adm-row-link" href="/{club.slug}" target="_blank" rel="noopener">{siteDomain}/{club.slug}</a>
+                  </div>
                 </div>
               </div>
             </td>

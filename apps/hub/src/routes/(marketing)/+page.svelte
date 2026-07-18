@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, Container } from '@saltcollective/ui';
+  import { siteDomain } from '$lib/domain';
 
   const features: { n: string; title: string; desc: string; cta: string | null }[] = [
     {
@@ -60,7 +61,7 @@
 
   const pricingItems = [
     'Unlimited sponsors and tiers',
-    'Custom hub URL (yours.salt.club)',
+    `Custom hub URL (${siteDomain}/yours)`,
     'Embed snippet for your existing site',
     'Mobile-friendly admin — works from the bleachers',
     'Engagement analytics, plain English',
