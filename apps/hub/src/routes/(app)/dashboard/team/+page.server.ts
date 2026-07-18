@@ -84,6 +84,44 @@ export const actions: Actions = {
     return { action: 'invite' as const, success: true };
   },
 
+  resend: async ({ request, locals, url }) => {
+    if (!locals.user) redirect(302, '/sign-in');
+
+    const membership = await prisma.clubMembership.findFirst({
+      where: { userId: locals.user.id, role: 'ADMIN' },
+      select: { club: { select: { id: true, name: true } } },
+    });
+    if (!membership) return fail(403, { action: 'resend' as const, error: 'Admin access required' });
+
+    const fd = await request.formData();
+    const inviteId = fd.get('inviteId') as string;
+
+    const invite = await prisma.clubInvite.findFirst({
+      where: { id: inviteId, clubId: membership.club.id, status: 'PENDING' },
+      select: { id: true, email: true, token: true },
+    });
+    if (!invite) return fail(404, { action: 'resend' as const, error: 'Invite not found' });
+
+    // Extend the expiry window — the accept page rejects expired invites.
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await prisma.clubInvite.update({
+      where: { id: invite.id },
+      data: { expiresAt },
+    });
+
+    const inviterName = locals.user.username ?? locals.user.email;
+    const inviteUrl = `${url.origin}/invite?code=${invite.token}`;
+
+    await sendInviteEmail({
+      to: invite.email,
+      clubName: membership.club.name,
+      inviterName,
+      inviteUrl,
+    });
+
+    return { action: 'resend' as const, success: true, email: invite.email };
+  },
+
   revoke: async ({ request, locals }) => {
     if (!locals.user) redirect(302, '/sign-in');
 

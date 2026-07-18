@@ -9,5 +9,10 @@
   "imports": {
     "@prisma/client": "npm:@prisma/client@^6.0.0",
     "@prisma/extension-accelerate": "npm:@prisma/extension-accelerate@^1.0.0"
+  },
+  "deploy": {
+    "org": "saltcollective",
+    "app": "saltcollective"
   }
 }
+

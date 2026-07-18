@@ -9,9 +9,15 @@
   let inviteEmail = $state('');
   let inviteRole = $state<'EDITOR' | 'ADMIN'>('EDITOR');
   let inviting = $state(false);
+  let resendingId = $state<string | null>(null);
 
   const inviteSuccess = $derived(form?.action === 'invite' && form?.success);
   const inviteError = $derived(form?.action === 'invite' && 'error' in form ? form.error : null);
+
+  const resendSuccess = $derived(
+    form?.action === 'resend' && form?.success && 'email' in form ? form.email : null
+  );
+  const resendError = $derived(form?.action === 'resend' && 'error' in form ? form.error : null);
 
   const memberError = $derived(
     form && (form.action === 'role' || form.action === 'remove') && 'error' in form
@@ -118,15 +124,39 @@
               </td>
               <td class="muted">{new Date(invite.createdAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
               <td class="actionCell">
-                <form method="POST" action="?/revoke" use:enhance>
-                  <input type="hidden" name="inviteId" value={invite.id} />
-                  <Button variant="ghost" size="sm" type="submit">Revoke</Button>
-                </form>
+                <div class="inviteActions">
+                  <form
+                    method="POST"
+                    action="?/resend"
+                    use:enhance={() => {
+                      resendingId = invite.id;
+                      return ({ update }) => {
+                        resendingId = null;
+                        update();
+                      };
+                    }}
+                  >
+                    <input type="hidden" name="inviteId" value={invite.id} />
+                    <Button variant="ghost" size="sm" type="submit" disabled={resendingId === invite.id}>
+                      {resendingId === invite.id ? 'Sending…' : 'Resend'}
+                    </Button>
+                  </form>
+                  <form method="POST" action="?/revoke" use:enhance>
+                    <input type="hidden" name="inviteId" value={invite.id} />
+                    <Button variant="ghost" size="sm" type="submit">Revoke</Button>
+                  </form>
+                </div>
               </td>
             </tr>
           {/each}
         </tbody>
       </table>
+      {#if resendSuccess}
+        <p class="feedback success memberFeedback">Invite resent to {resendSuccess}</p>
+      {/if}
+      {#if resendError}
+        <p class="feedback error memberFeedback">{resendError}</p>
+      {/if}
     </section>
   {/if}
 
@@ -260,6 +290,12 @@
 
   .actionCell {
     text-align: right;
+  }
+
+  .inviteActions {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
   }
 
   .youTag {
