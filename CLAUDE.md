@@ -1,6 +1,7 @@
 # Salt Collective Club Hub
 
 ## Overview
+
 Deno monorepo for the Salt Collective club hub application.
 
 ## Workspace Structure
@@ -22,22 +23,23 @@ Root `deno.json` declares workspaces and Deno-level lint/fmt rules. Each workspa
 
 ## Tech Stack
 
-| Concern | Choice |
-|---|---|
-| Runtime | Deno |
-| Deployment | Deno Deploy via `@sveltejs/adapter-auto` |
-| Framework | SvelteKit |
-| Components | Bits UI (headless) + CSS modules |
-| Auth | Clerk via `clerk-sveltekit` |
-| Database | Prisma Postgres (Prisma's managed serverless Postgres) |
-| ORM | Prisma with Accelerate extension (edge-compatible) |
-| File storage | AWS S3 |
-| CDN | AWS CloudFront (serves S3 assets) |
-| Styling | CSS modules — **no Tailwind** |
+| Concern      | Choice                                                 |
+| ------------ | ------------------------------------------------------ |
+| Runtime      | Deno                                                   |
+| Deployment   | Deno Deploy via `@sveltejs/adapter-auto`               |
+| Framework    | SvelteKit                                              |
+| Components   | Bits UI (headless) + CSS modules                       |
+| Auth         | Clerk via `clerk-sveltekit`                            |
+| Database     | Prisma Postgres (Prisma's managed serverless Postgres) |
+| ORM          | Prisma with Accelerate extension (edge-compatible)     |
+| File storage | AWS S3                                                 |
+| CDN          | AWS CloudFront (serves S3 assets)                      |
+| Styling      | CSS modules — **no Tailwind**                          |
 
 ## Key Conventions
 
 ### Components (`packages/ui`)
+
 - Bits UI provides headless, accessible primitives (used selectively — see below)
 - All styling via **Svelte's built-in scoped CSS** — use plain `<style>` blocks (not `<style module>`). Svelte 5 reserves `$`-prefixed identifiers for runes; `$style` from vite-plugin-svelte CSS modules is not compatible.
 - Use plain string class names in templates: `class="button {variant} {size}"`. Svelte scopes all selectors defined in `<style>` to the component automatically.
@@ -48,36 +50,41 @@ Root `deno.json` declares workspaces and Deno-level lint/fmt rules. Each workspa
 - **As new pages are built in `apps/hub`, extract reusable UI into `packages/ui` as part of that work** — don't defer it
 
 #### Design tokens
+
 CSS custom properties defined in `packages/ui/src/tokens.css`, imported once in the root `+layout.svelte`. All component styles reference these variables — no hardcoded values.
 
 Dark theme is the default (`:root`). Light theme activates automatically via `@media (prefers-color-scheme: light)` — no JavaScript, no class toggling.
 
 Static assets (`apps/hub/static/`):
+
 - `fonts/InterVariable.woff2` — Inter variable font, preloaded in `app.html`
 - Brand logos are served from CloudFront: `https://d2hxbdf4sjiujo.cloudfront.net/static/logo-dark.svg` and `logo-light.svg`. Use `BrandLogo.svelte` — it selects the correct variant via `<picture>` + `prefers-color-scheme`.
 
 #### Layout system
+
 - `Container.svelte` — max-width 1200px, centered, with horizontal padding. Use as a section wrapper.
 - `Grid.svelte` — CSS Grid primitive. For responsive layouts, define grid rules in each page/component's own `<style>` block.
 - Route group layouts (`(marketing)/+layout.svelte`, `(app)/+layout.svelte`) define page shells — nav, footer, sidebars.
 
 #### Current atoms (`packages/ui/src/lib/`)
 
-| Component | Description |
-|---|---|
-| `BrandLogo.svelte` | `<picture>` element serving CloudFront SVGs, switching dark/light via `prefers-color-scheme`. Prop: `height` (px). |
-| `Button.svelte` | Native `button`/`a` element. Props: `variant` (`primary`\|`secondary`\|`ghost`\|`destructive`), `size` (`sm`\|`md`\|`lg`), `href` (renders anchor), `disabled`. All other attrs spread through. |
-| `Label.svelte` | Native `label`. Prop: `required` (adds asterisk via CSS `::after`). Pass `for` via spread. |
-| `Input.svelte` | Compound input — optional `label` string renders a `Label` above, optional `error` string renders message below with red border. `value` is `$bindable`. |
-| `Badge.svelte` | Pure CSS status chip. Prop: `variant` (`default`\|`success`\|`warning`\|`destructive`). |
-| `Stat.svelte` | Stat card — eyebrow label + large numeric value. Props: `label`, `value`. |
-| `Grid.svelte` | CSS Grid layout primitive. Props: `cols` (number → `repeat(n,1fr)` or raw CSS string), `gap`, `rowGap`, `colGap`, `as` (polymorphic element tag). |
-| `Container.svelte` | Max-width 1200px centered container. Props: `as` (element tag), `class`. |
+| Component          | Description                                                                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BrandLogo.svelte` | `<picture>` element serving CloudFront SVGs, switching dark/light via `prefers-color-scheme`. Prop: `height` (px).                                                                              |
+| `Button.svelte`    | Native `button`/`a` element. Props: `variant` (`primary`\|`secondary`\|`ghost`\|`destructive`), `size` (`sm`\|`md`\|`lg`), `href` (renders anchor), `disabled`. All other attrs spread through. |
+| `Label.svelte`     | Native `label`. Prop: `required` (adds asterisk via CSS `::after`). Pass `for` via spread.                                                                                                      |
+| `Input.svelte`     | Compound input — optional `label` string renders a `Label` above, optional `error` string renders message below with red border. `value` is `$bindable`.                                        |
+| `Badge.svelte`     | Pure CSS status chip. Prop: `variant` (`default`\|`success`\|`warning`\|`destructive`).                                                                                                         |
+| `Stat.svelte`      | Stat card — eyebrow label + large numeric value. Props: `label`, `value`.                                                                                                                       |
+| `Grid.svelte`      | CSS Grid layout primitive. Props: `cols` (number → `repeat(n,1fr)` or raw CSS string), `gap`, `rowGap`, `colGap`, `as` (polymorphic element tag).                                               |
+| `Container.svelte` | Max-width 1200px centered container. Props: `as` (element tag), `class`.                                                                                                                        |
 
 #### Export conventions
+
 `packages/ui/src/index.ts` exports custom components by name (`Button`, `Label`, `Container`, etc.), which intentionally shadow the bits-ui primitives of the same name. Raw bits-ui namespaces are re-exported as `BitsButton` and `BitsLabel` for direct primitive access. All other bits-ui components (`Accordion`, `Dialog`, `Tabs`, etc.) are re-exported unchanged.
 
 ### Schema (`packages/schema`)
+
 - Contains `prisma/schema.prisma` as the single source of truth for data shapes
 - Prisma client is generated here and consumed by `apps/hub`
 - Use `prisma generate --no-engine` — the standard query engine binary does not work in Deno/edge; Prisma Postgres connects via HTTP through Prisma Accelerate
@@ -86,6 +93,7 @@ Static assets (`apps/hub/static/`):
 - **There is no local database** — all DB operations connect to Prisma Postgres
 
 ### Config (`packages/config`)
+
 - `tsconfig.base.json` — base TypeScript config extended by all workspaces
 - `tsconfig.svelte.json` — TypeScript config for Svelte projects
 - Prettier config + `prettier-plugin-svelte` (Deno fmt does not handle `.svelte` files — use Prettier for all formatting)
@@ -93,6 +101,7 @@ Static assets (`apps/hub/static/`):
 - Deno-level lint/fmt rules belong in root `deno.json`, not in this package
 
 ### Documentation (`docs/`)
+
 - Pure markdown only — no framework, no build step
 - Human-readable source; no tooling assumptions
 
@@ -100,12 +109,13 @@ Static assets (`apps/hub/static/`):
 
 Two separate env vars are required — Deno Deploy automatically injects `DATABASE_URL` as the direct PostgreSQL connection string and this cannot be overridden:
 
-| Variable | Value | Used by |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://...` — set automatically by Deno Deploy | Prisma migrations (`db:migrate`), also used as `directUrl` in `schema.prisma` |
-| `PRISMA_URL` | `prisma+postgres://...` — Prisma Accelerate connection string, set manually in Deno Deploy dashboard | App at runtime (`packages/schema/src/index.ts` reads this via `process.env.PRISMA_URL`) |
+| Variable       | Value                                                                                                | Used by                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `DATABASE_URL` | `postgresql://...` — set automatically by Deno Deploy                                                | Prisma migrations (`db:migrate`), also used as `directUrl` in `schema.prisma`           |
+| `PRISMA_URL`   | `prisma+postgres://...` — Prisma Accelerate connection string, set manually in Deno Deploy dashboard | App at runtime (`packages/schema/src/index.ts` reads this via `process.env.PRISMA_URL`) |
 
 The schema reflects this split:
+
 ```prisma
 datasource db {
   provider  = "postgresql"
@@ -135,8 +145,8 @@ Defined in `packages/schema/deno.json`. All operations connect to Prisma Postgre
 
 Local DB operations require the `--tunnel` flag to inject environment variables. The canonical change workflow is **edit model → `deno task --tunnel db:migrate` → commit migration → push → CD runs `db:migrate:deploy`** (see [Database change workflow](#database-change-workflow-canonical)). `db:migrate:deploy` runs in CD without `--tunnel` (Deno Deploy injects the env). `db:push` skips migration files and causes history drift — only for a throwaway/fresh dev environment where data loss is acceptable, never in the normal workflow.
 
-
 ## Adapter Note
+
 `@sveltejs/adapter-auto` is used. Deno Deploy is not in adapter-auto's platform detection list — it will fall back to `adapter-node`, which runs via Deno's Node.js compatibility mode. If platform-specific issues arise at deploy time, the escape hatch is switching to `@sveltejs/adapter-deno`.
 
 ## File Storage (`apps/hub`)
@@ -144,6 +154,7 @@ Local DB operations require the `--tunnel` flag to inject environment variables.
 User-uploaded files (club logos, business logos) and static site assets are stored in AWS S3 (`saltcollective-uploads`, `ap-southeast-2`) and served via CloudFront (`d2hxbdf4sjiujo.cloudfront.net`).
 
 The server never handles file bytes directly. The upload flow:
+
 1. Client POSTs to `POST /api/upload` with `{ contentType, folder, id }`
 2. Server returns `{ uploadUrl, publicUrl }` — a presigned S3 PUT URL and the final CloudFront URL
 3. Client PUTs the file directly to S3 via the presigned URL
@@ -152,6 +163,7 @@ The server never handles file bytes directly. The upload flow:
 S3 utility: `apps/hub/src/lib/server/s3.ts`. Upload endpoint: `apps/hub/src/routes/api/upload/+server.ts`.
 
 Key structure:
+
 - `clubs/{clubId}/{timestamp}.{ext}` — club logos
 - `businesses/{businessId}/{timestamp}.{ext}` — business logos
 - `static/` — manually uploaded non-code static content
@@ -171,14 +183,17 @@ Post-auth club admin interface. The `(app)` route group provides the hub shell �
 The `(app)` group is restricted to authenticated users who have at least one `ClubMembership`. The layout server enforces this and passes `{ club, role }` down to every child page.
 
 **Who can access:**
+
 - Any user with a `ClubMembership` (`ADMIN` or `EDITOR` role)
 - `UserType.SITE_ADMIN` users (platform-level admins) — not yet explicitly handled; currently they must also have a `ClubMembership` to enter the hub
 
 **`ClubRole` permissions (convention, not yet fully enforced in code):**
+
 - `ADMIN` — full access: sponsors, tiers, analytics, embed, settings
 - `EDITOR` — can add/edit businesses; should not access tiers or settings screens
 
 Role-based guards are enforced on `tiers`, `team` and `settings` — both in `load` (via `parent()` role) and in every form action (via a scoped `clubMembership.findFirst({ role: 'ADMIN' })`, since actions can't rely on the layout). The `(app)` layout also hides ADMIN-only nav items from EDITORs. When adding a restricted screen, follow the same pattern:
+
 ```typescript
 // In a page's +page.server.ts
 const { role } = await parent();
@@ -190,14 +205,16 @@ if (role !== 'ADMIN') error(403, 'Admin access required');
 Every page load calls `await parent()` to get `{ club, role }` from the layout server. **All Prisma queries in `(app)` pages must filter by `clubId: club.id`** — never query across clubs. The layout guarantees the club belongs to the signed-in user.
 
 ### Shell
+
 - `(app)/+layout.server.ts` — redirects unauthenticated users to `/sign-in`; redirects users with no `ClubMembership` to `/onboarding/club`; passes `{ club, role }` to all child pages
 - `(app)/+layout.svelte` — 240px sidebar + 1fr main on desktop; collapses to a sticky mobile bar + slide-in drawer on ≤820px
 
 ### Hub-specific components (`apps/hub/src/lib/components/`)
+
 These are hub-specific and do not belong in `packages/ui`:
 
-| Component | Description |
-|---|---|
+| Component           | Description                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `PageHeader.svelte` | Page title + optional subtitle + optional `{#snippet action()}` slot. Used at the top of every hub screen. |
 
 The sidebar itself is `AppSidebar` from `@saltcollective/ui`, configured with nav sections inline in `(app)/+layout.svelte` (ADMIN-only items filtered by `data.role`).
@@ -205,7 +222,9 @@ The sidebar itself is `AppSidebar` from `@saltcollective/ui`, configured with na
 Full spec (current state, screen designs, to-do list): [`hub-dashboard.md`](hub-dashboard.md).
 
 ### Screens built
+
 All dashboard screens are built:
+
 - `dashboard/` — four `Stat` cards (total, active, inactive, views this month) + recent sponsors list
 - `dashboard/sponsors/` — tier filter chips + business table; reflowed to card rows on mobile
 - `dashboard/sponsors/new` + `dashboard/sponsors/[id]/edit` — full sponsor CRUD with logo upload
@@ -216,10 +235,12 @@ All dashboard screens are built:
 - `dashboard/team/` — members, role management, invites (send / resend / revoke) (ADMIN-guarded)
 
 ### Public hub page
+
 - `(hub)/[slug]/` — public-facing sponsor listing with tier filtering, search, click tracking
 - `(hub)/[slug]/sponsor/` — sponsorship request form; emails club admins
 
 ### Site admin (`/admin/*`)
+
 Restricted to `UserType.SITE_ADMIN`. Dashboard, clubs, users, analytics, billing, discount-codes screens exist — clubs and users are currently **read-only lists** (see Roadmap).
 
 ## Onboarding (`apps/hub/src/routes/onboarding/`)
@@ -228,9 +249,10 @@ Multi-step wizard taking a new user from sign-up to a live club hub. Full spec: 
 
 **Route:** `/onboarding/*` — 5 steps: club details → branding → tiers → payment (stub) → done.
 
-**Status:** Implementation complete (untested end-to-end).
+**Status:** Implementation complete; verified end-to-end 2026-07-19.
 
 **Key behaviour:**
+
 - Step 1 creates `Club` + `ClubMembership(ADMIN)`. Steps 2–4 update via `?club=<clubId>` URL param.
 - Done step sets `Club.publishedAt` — the club goes live immediately.
 - `(app)` layout redirects users with no membership to `/onboarding/club` (not `/`).
@@ -261,6 +283,7 @@ SvelteKit supports returning unawaited `Promise`s from `load` functions so the p
 **Once the Deno Deploy plan is upgraded:** apply streaming to the dashboard overview (stream recent sponsors list, render stat card shells immediately) and the sponsors list (stream table rows). The public hub page tier grids are also a good candidate. Pattern: await only the minimum data needed to render the page shell; return everything else as an unawaited promise.
 
 ## Deno Deploy Constraints
+
 - No filesystem access at runtime
 - No direct TCP database connections — Prisma Postgres uses HTTP via Accelerate, which works here
 - No persistent in-memory state between requests
@@ -297,6 +320,7 @@ This is the standard process for **every** schema change — always create a mig
 Last audited 2026-07-18. All screens exist; remaining work is depth, verification, and stubs.
 
 ### Priority — functional gaps
+
 1. **Stripe integration** — the onboarding payment step is a stub, and `/admin/billing` has no real revenue data. Biggest gap between "live hub" and "paying hub". Needs Stripe account/credentials before code.
 2. **Admin club management** — `/admin/clubs` is a read-only list. Needs actions: unpublish/suspend, delete, view detail.
 3. **Admin user management** — `/admin/users` is a read-only list. Needs actions: change `UserType`, suspend/delete.
@@ -305,12 +329,18 @@ Last audited 2026-07-18. All screens exist; remaining work is depth, verificatio
 6. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
 
 ### Verification
-- **End-to-end onboarding test** — the full sign-up → club → branding → tiers → payment → done flow has never been walked through. Needs `deno task --tunnel dev`.
-- **Invite loop** — send/accept was manually tested; **resend** (added 2026-07-18) has only been type-checked. Verify email delivery and the extended expiry.
+
+All manually verified by Liam on 2026-07-19 (dev server, step-by-step walkthrough): onboarding end-to-end (incl. slug-taken check, mid-flow `/dashboard` redirect, done-page URL), invite send/accept/resend (email delivery, double-click resend), invited sign-up returning to `/invite` (not onboarding), tiers/settings/team 403 guards + EDITOR sidebar filtering, admin club links, and `PUBLIC_SITE_DOMAIN` env override on embed/settings/marketing. Re-verify these flows after changes to onboarding, invites, or role guards.
 
 ### Housekeeping
+
 - 25 svelte-check warnings, mostly `state_referenced_locally` (capturing `data`/`form` in `$state` initializers instead of `$derived`).
 
 ### Deferred (revisit when triggered)
+
 - **Sequential DB round-trips** — see [Known performance issue](#known-performance-issue--sequential-db-round-trips); monitor load times first.
 - **SvelteKit streaming** — blocked on Deno Deploy Pro plan for chunked responses.
+
+### Testing
+
+When testing features, lead Liam through the testing process asking for screenshots and confirmation that a feature is working rather than running through your usual test cycle. Less waste of tokens that way. When running testing, provide step by step instructions for how to test a feature if it's not obvious.
