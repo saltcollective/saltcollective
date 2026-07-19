@@ -321,12 +321,10 @@ Last audited 2026-07-18. All screens exist; remaining work is depth, verificatio
 
 ### Priority — functional gaps
 
-1. **Stripe integration** — the onboarding payment step is a stub, and `/admin/billing` has no real revenue data. Biggest gap between "live hub" and "paying hub". Needs Stripe account/credentials before code.
-2. **Admin club management** — `/admin/clubs` is a read-only list. Needs actions: unpublish/suspend, delete, view detail.
-3. **Admin user management** — `/admin/users` is a read-only list. Needs actions: change `UserType`, suspend/delete.
-4. **Impersonation** — no way for a SITE_ADMIN to view/operate a club's hub as that club. Needed for support. Design carefully (audit trail, clear "impersonating" banner, scoped session).
-5. **Analytics export** — the Export button on `/admin/analytics` renders but has no handler. Implement CSV export; consider the same for club-facing `dashboard/analytics`.
-6. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
+1. **Admin club management** — `/admin/clubs` is a read-only list. Needs actions: unpublish/suspend, delete, view detail.
+2. **Admin user management** — `/admin/users` is a read-only list. Needs actions: change `UserType`, suspend/delete.
+3. **Impersonation** — no way for a SITE_ADMIN to view/operate a club's hub as that club. Needed for support. Design carefully (audit trail, clear "impersonating" banner, scoped session). The schema already has an `ImpersonationLog` model to build on.
+4. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
 
 ### Verification
 
@@ -338,8 +336,13 @@ All manually verified by Liam on 2026-07-19 (dev server, step-by-step walkthroug
 
 ### Deferred (revisit when triggered)
 
+- **Stripe integration** — the onboarding payment step is a stub, and `/admin/billing` has no real revenue data. Parked 2026-07-19 while Liam firms up the Stripe account/plan details; the biggest functional gap once unblocked.
 - **Sequential DB round-trips** — see [Known performance issue](#known-performance-issue--sequential-db-round-trips); monitor load times first.
 - **SvelteKit streaming** — blocked on Deno Deploy Pro plan for chunked responses.
+
+### Done (recent)
+
+- **Analytics export** (2026-07-19) — `GET /admin/analytics/export` (SITE_ADMIN, all clubs, last 90 days) and `GET /dashboard/analytics/export?period=` (club-scoped, honours the page's period filter) return CSV downloads; both Export buttons wired. Note: `+server.ts` endpoints don't inherit layout guards — each endpoint enforces its own auth.
 
 ### Testing
 

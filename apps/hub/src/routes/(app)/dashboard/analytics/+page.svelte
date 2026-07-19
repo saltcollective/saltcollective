@@ -1,6 +1,6 @@
 <script lang="ts">
   import PageHeader from '$lib/components/PageHeader.svelte';
-  import { Stat } from '@saltcollective/ui';
+  import { Button, Stat } from '@saltcollective/ui';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -45,7 +45,18 @@
 </script>
 
 <div class="screen">
-  <PageHeader title="Analytics" subtitle="Click engagement across your sponsors." />
+  <PageHeader title="Analytics" subtitle="Click engagement across your sponsors.">
+    {#snippet action()}
+      <Button
+        variant="secondary"
+        size="sm"
+        href="/dashboard/analytics/export?period={data.period}"
+        data-sveltekit-reload
+      >
+        Export CSV
+      </Button>
+    {/snippet}
+  </PageHeader>
 
   <div class="toolbar">
     <div class="chips">

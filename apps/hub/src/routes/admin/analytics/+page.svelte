@@ -35,7 +35,7 @@
       <p class="adm-page-sub">Platform engagement across every club.</p>
     </div>
     <div class="adm-topbar-actions">
-      <button class="sc-btn sc-btn-secondary sc-btn-sm">Export</button>
+      <a class="sc-btn sc-btn-secondary sc-btn-sm" href="/admin/analytics/export" data-sveltekit-reload>Export</a>
     </div>
   </div>
 
