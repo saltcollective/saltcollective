@@ -25,6 +25,13 @@
     external?: boolean;
   }
 
+  interface Switcher {
+    label: string;
+    options: { label: string; value: string }[];
+    current: string;
+    action: string;
+  }
+
   interface Props {
     activeRoute: string;
     sections: NavSection[];
@@ -35,6 +42,7 @@
     onToggle?: () => void;
     tag?: string;
     footerLink?: FooterLink;
+    switcher?: Switcher;
   }
 
   let {
@@ -47,6 +55,7 @@
     onToggle,
     tag,
     footerLink,
+    switcher,
   }: Props = $props();
 
   const initial = $derived(identity.initial ?? identity.name[0]?.toUpperCase() ?? '?');
@@ -135,6 +144,25 @@
   </nav>
 
   <div class="footer">
+    {#if switcher && !collapsed}
+      <form class="switcherForm" method="POST" action={switcher.action}>
+        <label class="switcherLabel">
+          <span class="switcherLabelText">{switcher.label}</span>
+          <select
+            class="switcherSelect"
+            name="value"
+            onchange={(e) => e.currentTarget.form?.submit()}
+          >
+            {#each switcher.options as option (option.value)}
+              <option value={option.value} selected={option.value === switcher.current}>
+                {option.label}
+              </option>
+            {/each}
+          </select>
+        </label>
+      </form>
+    {/if}
+
     {#if footerLink && !collapsed}
       <a
         href={footerLink.href}
@@ -328,6 +356,44 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+  }
+
+  .switcherForm {
+    padding: 0 var(--space-1);
+  }
+
+  .switcherLabel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .switcherLabelText {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    padding: 0 var(--space-1);
+  }
+
+  .switcherSelect {
+    width: 100%;
+    height: 32px;
+    padding: 0 var(--space-2);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .switcherSelect:focus {
+    border-color: var(--color-accent);
   }
 
   .footerLink {

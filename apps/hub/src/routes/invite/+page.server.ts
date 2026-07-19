@@ -1,6 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { logAudit } from '$lib/server/audit';
+import { ACTIVE_CLUB_COOKIE } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -8,7 +9,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-  accept: async ({ request, locals }) => {
+  accept: async ({ request, locals, cookies }) => {
     if (!locals.user) return fail(401, { error: 'You must be signed in to accept an invite' });
 
     const fd = await request.formData();
@@ -62,6 +63,14 @@ export const actions: Actions = {
         data: { status: 'ACCEPTED' },
       });
     }
+
+    // Land the user in the club they just joined.
+    cookies.set(ACTIVE_CLUB_COOKIE, invite.clubId, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
+    });
 
     redirect(302, '/dashboard');
   },

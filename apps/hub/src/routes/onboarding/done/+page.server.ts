@@ -1,9 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { logAudit } from '$lib/server/audit';
+import { ACTIVE_CLUB_COOKIE } from '$lib/server/club-access';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, url, cookies }) => {
   if (!locals.user) redirect(302, '/sign-in');
 
   const clubId = url.searchParams.get('club');
@@ -34,6 +35,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       actor: { id: locals.user.id, email: locals.user.email },
     });
   }
+
+  // Land the user in the club they just finished onboarding.
+  cookies.set(ACTIVE_CLUB_COOKIE, clubId, {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 365,
+  });
 
   return { clubName: club.name, slug: club.slug };
 };

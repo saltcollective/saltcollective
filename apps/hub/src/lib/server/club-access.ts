@@ -2,6 +2,7 @@ import type { Cookies } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 
 export const IMPERSONATION_COOKIE = 'impersonation_session';
+export const ACTIVE_CLUB_COOKIE = 'active_club';
 
 export interface ClubAccess {
   club: { id: string; name: string; slug: string; logoUrl: string | null };
@@ -38,6 +39,22 @@ export async function getClubAccess(
         data: { endedAt: new Date() },
       });
       cookies.delete(IMPERSONATION_COOKIE, { path: '/' });
+    }
+  }
+
+  // Selected active club (multi-club). A stale cookie — membership revoked or
+  // club deleted — silently falls through to the default.
+  const activeClubId = cookies.get(ACTIVE_CLUB_COOKIE);
+  if (activeClubId) {
+    const selected = await prisma.clubMembership.findFirst({
+      where: { userId: locals.user.id, clubId: activeClubId },
+      select: {
+        role: true,
+        club: { select: { id: true, name: true, slug: true, logoUrl: true } },
+      },
+    });
+    if (selected) {
+      return { club: selected.club, role: selected.role, impersonating: false };
     }
   }
 

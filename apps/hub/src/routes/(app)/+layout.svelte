@@ -72,6 +72,17 @@
     sections={navSections}
     identity={{ name: data.club.name, subtitle: 'Club admin' }}
     footerLink={{ href: `/${data.club.slug}`, label: 'View public hub', external: true }}
+    switcher={data.impersonating
+      ? undefined
+      : {
+          label: 'Club',
+          options: [
+            ...data.clubs.map((c) => ({ label: c.name, value: c.id })),
+            { label: '＋ New club', value: 'new' },
+          ],
+          current: data.club.id,
+          action: '/api/active-club',
+        }}
     activeRoute={page.url.pathname}
     {collapsed}
     onToggle={() => (collapsed = !collapsed)}

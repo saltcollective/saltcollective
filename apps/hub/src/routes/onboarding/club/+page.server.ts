@@ -2,10 +2,14 @@ import { redirect, fail } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { RESERVED_SLUGS } from '$lib/server/reserved-slugs';
 import { logAudit } from '$lib/server/audit';
+import { ACTIVE_CLUB_COOKIE } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
   if (!locals.user) redirect(302, '/sign-in');
+
+  // Explicit second-club creation via the club switcher's "＋ New club".
+  if (url.searchParams.has('new')) return {};
 
   const membership = await prisma.clubMembership.findFirst({
     where: { userId: locals.user.id },
@@ -17,7 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-  create: async ({ request, locals }) => {
+  create: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
     const data = await request.formData();
@@ -45,6 +49,12 @@ export const actions: Actions = {
     const club = await prisma.club.create({ data: { name, slug, tagline } });
     await prisma.clubMembership.create({
       data: { userId: locals.user.id, clubId: club.id, role: 'ADMIN' },
+    });
+    cookies.set(ACTIVE_CLUB_COOKIE, club.id, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
     });
     await logAudit({
       entityType: 'CLUB',
