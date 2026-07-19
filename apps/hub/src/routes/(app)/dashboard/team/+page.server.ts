@@ -2,6 +2,7 @@ import { redirect, fail, error } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { sendInviteEmail } from '$lib/server/email';
 import { logAudit } from '$lib/server/audit';
+import { getClubAccess } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ parent, locals }) => {
@@ -30,16 +31,15 @@ export const load: PageServerLoad = async ({ parent, locals }) => {
 };
 
 export const actions: Actions = {
-  invite: async ({ request, locals, url }) => {
+  invite: async ({ request, locals, url, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true, name: true } } },
-    });
-    if (!membership) return fail(403, { action: 'invite' as const, error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { action: 'invite' as const, error: 'Admin access required' });
+    }
 
-    const { id: clubId, name: clubName } = membership.club;
+    const { id: clubId, name: clubName } = access.club;
     const fd = await request.formData();
     const email = (fd.get('email') as string)?.trim().toLowerCase();
     const rawRole = fd.get('role') as string;
@@ -85,20 +85,19 @@ export const actions: Actions = {
     return { action: 'invite' as const, success: true };
   },
 
-  resend: async ({ request, locals, url }) => {
+  resend: async ({ request, locals, url, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true, name: true } } },
-    });
-    if (!membership) return fail(403, { action: 'resend' as const, error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { action: 'resend' as const, error: 'Admin access required' });
+    }
 
     const fd = await request.formData();
     const inviteId = fd.get('inviteId') as string;
 
     const invite = await prisma.clubInvite.findFirst({
-      where: { id: inviteId, clubId: membership.club.id, status: 'PENDING' },
+      where: { id: inviteId, clubId: access.club.id, status: 'PENDING' },
       select: { id: true, email: true, token: true },
     });
     if (!invite) return fail(404, { action: 'resend' as const, error: 'Invite not found' });
@@ -115,7 +114,7 @@ export const actions: Actions = {
 
     await sendInviteEmail({
       to: invite.email,
-      clubName: membership.club.name,
+      clubName: access.club.name,
       inviterName,
       inviteUrl,
     });
@@ -123,36 +122,34 @@ export const actions: Actions = {
     return { action: 'resend' as const, success: true, email: invite.email };
   },
 
-  revoke: async ({ request, locals }) => {
+  revoke: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true } } },
-    });
-    if (!membership) return fail(403, { action: 'revoke' as const, error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { action: 'revoke' as const, error: 'Admin access required' });
+    }
 
     const fd = await request.formData();
     const inviteId = fd.get('inviteId') as string;
 
     await prisma.clubInvite.updateMany({
-      where: { id: inviteId, clubId: membership.club.id },
+      where: { id: inviteId, clubId: access.club.id },
       data: { status: 'REVOKED' },
     });
 
     return { action: 'revoke' as const, success: true };
   },
 
-  updateRole: async ({ request, locals }) => {
+  updateRole: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true, name: true } } },
-    });
-    if (!membership) return fail(403, { action: 'role' as const, error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { action: 'role' as const, error: 'Admin access required' });
+    }
 
-    const clubId = membership.club.id;
+    const clubId = access.club.id;
     const fd = await request.formData();
     const membershipId = fd.get('membershipId') as string;
     const rawRole = fd.get('role') as string;
@@ -180,7 +177,7 @@ export const actions: Actions = {
       await logAudit({
         entityType: 'CLUB',
         entityId: clubId,
-        entityName: membership.club.name,
+        entityName: access.club.name,
         type: 'MEMBER_ROLE_CHANGED',
         actor: { id: locals.user.id, email: locals.user.email },
         detail: `${target.user.email}: ${target.role} → ${role}`,
@@ -190,16 +187,15 @@ export const actions: Actions = {
     return { action: 'role' as const, success: true };
   },
 
-  removeMember: async ({ request, locals }) => {
+  removeMember: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true, name: true } } },
-    });
-    if (!membership) return fail(403, { action: 'remove' as const, error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { action: 'remove' as const, error: 'Admin access required' });
+    }
 
-    const clubId = membership.club.id;
+    const clubId = access.club.id;
     const fd = await request.formData();
     const membershipId = fd.get('membershipId') as string;
     if (!membershipId) return fail(400, { action: 'remove' as const, error: 'Invalid request' });
@@ -225,7 +221,7 @@ export const actions: Actions = {
     await logAudit({
       entityType: 'CLUB',
       entityId: clubId,
-      entityName: membership.club.name,
+      entityName: access.club.name,
       type: 'MEMBER_REMOVED',
       actor: { id: locals.user.id, email: locals.user.email },
       detail: `${target.user.email} removed (was ${target.role})`,

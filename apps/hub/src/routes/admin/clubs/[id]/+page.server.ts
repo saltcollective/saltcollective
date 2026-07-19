@@ -1,6 +1,8 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { setClubStatus, deleteClub } from '$lib/server/admin-clubs';
+import { logAudit } from '$lib/server/audit';
+import { IMPERSONATION_COOKIE } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -98,5 +100,47 @@ export const actions: Actions = {
     if (!result.ok) return fail(404, { error: result.error });
 
     redirect(303, '/admin/clubs');
+  },
+
+  impersonate: async ({ locals, params, cookies }) => {
+    if (!locals.user) redirect(302, '/sign-in');
+    if (locals.user.userType !== 'SITE_ADMIN') {
+      return fail(403, { error: 'Site admin access required' });
+    }
+
+    const club = await prisma.club.findUnique({
+      where: { id: params.id },
+      select: { id: true, name: true },
+    });
+    if (!club) return fail(404, { error: 'Club not found' });
+
+    // One open session per admin — close any earlier ones (also tidies
+    // sessions whose cookie expired without an explicit end).
+    await prisma.impersonationLog.updateMany({
+      where: { impersonatorId: locals.user.id, endedAt: null },
+      data: { endedAt: new Date() },
+    });
+
+    const session = await prisma.impersonationLog.create({
+      data: { impersonatorId: locals.user.id, clubId: club.id, clubName: club.name },
+      select: { id: true },
+    });
+
+    cookies.set(IMPERSONATION_COOKIE, session.id, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 2,
+    });
+
+    await logAudit({
+      entityType: 'CLUB',
+      entityId: club.id,
+      entityName: club.name,
+      type: 'CLUB_IMPERSONATION_STARTED',
+      actor: { id: locals.user.id, email: locals.user.email },
+    });
+
+    redirect(303, '/dashboard');
   },
 };

@@ -33,7 +33,6 @@ model User {
 
   memberships    ClubMembership[]
   impersonations ImpersonationLog[] @relation("Impersonator")
-  impersonatedBy ImpersonationLog[] @relation("Impersonated")
   discountCodes  DiscountCode[]     @relation("DiscountCodeCreator")
 }
 
@@ -69,6 +68,8 @@ enum AuditEventType {
   MEMBER_JOINED
   MEMBER_REMOVED
   MEMBER_ROLE_CHANGED
+  CLUB_IMPERSONATION_STARTED
+  CLUB_IMPERSONATION_ENDED
 }
 
 // Append-only lifecycle audit log. Deliberately no FK relations: rows must
@@ -89,15 +90,17 @@ model AuditEvent {
   @@index([createdAt])
 }
 
+// Club-targeted impersonation sessions. Club side is deliberately relation-free
+// (plain id + name snapshot) so session history survives club deletion.
 model ImpersonationLog {
   id             String    @id @default(cuid())
   impersonatorId String
-  impersonatedId String
+  clubId         String
+  clubName       String
   startedAt      DateTime  @default(now())
   endedAt        DateTime?
 
   impersonator User @relation("Impersonator", fields: [impersonatorId], references: [id])
-  impersonated User @relation("Impersonated", fields: [impersonatedId], references: [id])
 }
 
 enum ClubStatus {

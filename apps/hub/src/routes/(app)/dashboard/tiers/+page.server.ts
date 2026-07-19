@@ -1,5 +1,6 @@
 import { redirect, fail, error } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { getClubAccess } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -28,16 +29,13 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-  save: async ({ request, locals }) => {
+  save: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true } } },
-    });
-    if (!membership) return fail(403, { error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') return fail(403, { error: 'Admin access required' });
 
-    const clubId = membership.club.id;
+    const clubId = access.club.id;
     const fd = await request.formData();
 
     let submitted: Array<{ id?: string; name: string; price: string }>;

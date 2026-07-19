@@ -189,9 +189,7 @@ export const actions: Actions = {
     }
 
     await prisma.$transaction([
-      prisma.impersonationLog.deleteMany({
-        where: { OR: [{ impersonatorId: userId }, { impersonatedId: userId }] },
-      }),
+      prisma.impersonationLog.deleteMany({ where: { impersonatorId: userId } }),
       prisma.clubMembership.deleteMany({ where: { userId } }),
       prisma.user.delete({ where: { id: userId } }),
     ]);

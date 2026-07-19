@@ -29,6 +29,18 @@
   ]);
 </script>
 
+{#if data.impersonating}
+  <div class="impersonation-banner">
+    <span>
+      Impersonating <strong>{data.club.name}</strong> — changes affect the real club and are
+      recorded in the audit log.
+    </span>
+    <form method="POST" action="/api/impersonation/stop">
+      <button type="submit">End impersonation</button>
+    </form>
+  </div>
+{/if}
+
 <div class="shell" class:collapsed class:drawerOpen>
   <!-- Mobile top bar -->
   <div class="mobileBar">
@@ -77,6 +89,42 @@
 </div>
 
 <style>
+  .impersonation-banner {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    background: color-mix(in srgb, var(--color-warning, #f59e0b) 22%, var(--color-bg));
+    border-bottom: 1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 45%, transparent);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+  }
+
+  .impersonation-banner strong {
+    font-weight: 700;
+  }
+
+  .impersonation-banner button {
+    height: 28px;
+    padding: 0 var(--space-3);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .impersonation-banner button:hover {
+    opacity: 0.85;
+  }
+
   .shell {
     display: grid;
     grid-template-columns: 240px 1fr;

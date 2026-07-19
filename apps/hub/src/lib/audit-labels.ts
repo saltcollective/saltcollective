@@ -12,6 +12,8 @@ export const EVENT_LABELS: Record<string, string> = {
   MEMBER_JOINED: 'Member joined',
   MEMBER_REMOVED: 'Member removed',
   MEMBER_ROLE_CHANGED: 'Member role changed',
+  CLUB_IMPERSONATION_STARTED: 'Impersonation started',
+  CLUB_IMPERSONATION_ENDED: 'Impersonation ended',
 };
 
 export function fmtTime(date: Date | string): string {

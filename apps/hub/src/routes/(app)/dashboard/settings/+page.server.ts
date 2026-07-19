@@ -1,5 +1,7 @@
 import { redirect, fail, error } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { getClubAccess } from '$lib/server/club-access';
+import { deleteClub } from '$lib/server/admin-clubs';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -21,16 +23,15 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-  updateIdentity: async ({ request, locals }) => {
+  updateIdentity: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true, slug: true } } },
-    });
-    if (!membership) return fail(403, { updated: 'identity' as const, error: 'Admin access required', slugTaken: false as boolean });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { updated: 'identity' as const, error: 'Admin access required', slugTaken: false as boolean });
+    }
 
-    const clubId = membership.club.id;
+    const clubId = access.club.id;
     const fd = await request.formData();
     const name = (fd.get('name') as string)?.trim();
     const slug = (fd.get('slug') as string)?.trim().toLowerCase();
@@ -43,26 +44,25 @@ export const actions: Actions = {
       return fail(400, { ...base, error: 'Slug must be at least 2 characters — lowercase letters, numbers, and hyphens only' });
     }
 
-    if (slug !== membership.club.slug) {
+    if (slug !== access.club.slug) {
       const existing = await prisma.club.findUnique({ where: { slug }, select: { id: true } });
       if (existing) return fail(400, { ...base, error: 'That URL is already taken — try a different one', slugTaken: true });
     }
 
     await prisma.club.update({ where: { id: clubId }, data: { name, slug, tagline } });
-    await prisma.$accelerate.invalidate({ tags: [`club_${membership.club.slug.replace(/-/g, '_')}`] });
+    await prisma.$accelerate.invalidate({ tags: [`club_${access.club.slug.replace(/-/g, '_')}`] });
     return { updated: 'identity' as const, success: true, slugTaken: false as boolean };
   },
 
-  updateBranding: async ({ request, locals }) => {
+  updateBranding: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true, slug: true } } },
-    });
-    if (!membership) return fail(403, { updated: 'branding' as const, error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { updated: 'branding' as const, error: 'Admin access required' });
+    }
 
-    const clubId = membership.club.id;
+    const clubId = access.club.id;
     const fd = await request.formData();
     const logoUrl = (fd.get('logoUrl') as string)?.trim() || null;
     const primaryColour = (fd.get('primaryColour') as string)?.trim() || null;
@@ -72,20 +72,19 @@ export const actions: Actions = {
     const colorScheme = rawScheme === 'LIGHT' || rawScheme === 'DARK' || rawScheme === 'SYSTEM' ? rawScheme : 'SYSTEM';
 
     await prisma.club.update({ where: { id: clubId }, data: { logoUrl, primaryColour, secondaryColour, backgroundColour, colorScheme } });
-    await prisma.$accelerate.invalidate({ tags: [`club_${membership.club.slug.replace(/-/g, '_')}`] });
+    await prisma.$accelerate.invalidate({ tags: [`club_${access.club.slug.replace(/-/g, '_')}`] });
     return { updated: 'branding' as const, success: true };
   },
 
-  deleteClub: async ({ request, locals }) => {
+  deleteClub: async ({ request, locals, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true, name: true } } },
-    });
-    if (!membership) return fail(403, { error: 'Admin access required' });
+    const access = await getClubAccess(locals, cookies);
+    if (!access || access.role !== 'ADMIN') {
+      return fail(403, { error: 'Admin access required' });
+    }
 
-    const { id: clubId, name: clubName } = membership.club;
+    const { id: clubId, name: clubName } = access.club;
     const fd = await request.formData();
     const confirmName = (fd.get('confirmName') as string)?.trim();
 
@@ -93,14 +92,8 @@ export const actions: Actions = {
       return fail(400, { error: 'Club name does not match', deleted: false });
     }
 
-    await prisma.$transaction([
-      prisma.clickEvent.deleteMany({ where: { clubId } }),
-      prisma.business.deleteMany({ where: { clubId } }),
-      prisma.sponsorTier.deleteMany({ where: { clubId } }),
-      prisma.tag.deleteMany({ where: { clubId } }),
-      prisma.clubMembership.deleteMany({ where: { clubId } }),
-      prisma.club.delete({ where: { id: clubId } }),
-    ]);
+    const result = await deleteClub(clubId, { id: locals.user.id, email: locals.user.email });
+    if (!result.ok) return fail(404, { error: result.error });
 
     redirect(302, '/onboarding/club');
   },

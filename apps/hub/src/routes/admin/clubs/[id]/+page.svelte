@@ -52,6 +52,23 @@
       </div>
     </div>
     <div class="adm-topbar-actions">
+      <form
+        method="POST"
+        action="?/impersonate"
+        use:enhance={({ cancel }) => {
+          if (
+            !confirm(
+              `Impersonate ${club.name}? You'll operate their dashboard with full admin access — changes affect the real club and are recorded in the audit log.`
+            )
+          ) {
+            cancel();
+            return;
+          }
+          return ({ update }) => update();
+        }}
+      >
+        <button class="sc-btn sc-btn-secondary sc-btn-sm" type="submit">Impersonate</button>
+      </form>
       <a class="sc-btn sc-btn-secondary sc-btn-sm" href="/{club.slug}" target="_blank" rel="noopener">
         View public hub
       </a>

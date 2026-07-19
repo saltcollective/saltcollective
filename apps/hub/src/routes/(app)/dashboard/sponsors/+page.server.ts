@@ -1,5 +1,7 @@
 import { redirect, fail, error } from '@sveltejs/kit';
+import type { Cookies } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { getClubAccess } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -42,20 +44,17 @@ export const load: PageServerLoad = async ({ parent }) => {
   };
 };
 
-async function requireAdminClubId(userId: string | undefined): Promise<string> {
-  if (!userId) redirect(302, '/sign-in');
-  const membership = await prisma.clubMembership.findFirst({
-    where: { userId, role: 'ADMIN' },
-    select: { club: { select: { id: true } } },
-  });
-  if (!membership) redirect(302, '/onboarding/club');
-  return membership.club.id;
+async function requireAdminClubId(locals: App.Locals, cookies: Cookies): Promise<string> {
+  if (!locals.user) redirect(302, '/sign-in');
+  const access = await getClubAccess(locals, cookies);
+  if (!access || access.role !== 'ADMIN') redirect(302, '/onboarding/club');
+  return access.club.id;
 }
 
 export const actions: Actions = {
   // Publish a lead: requires it to have a tier assigned first.
-  publish: async ({ request, locals }) => {
-    const clubId = await requireAdminClubId(locals.user?.id);
+  publish: async ({ request, locals, cookies }) => {
+    const clubId = await requireAdminClubId(locals, cookies);
     const fd = await request.formData();
     const id = fd.get('id') as string;
 
@@ -75,8 +74,8 @@ export const actions: Actions = {
   },
 
   // Decline a lead.
-  decline: async ({ request, locals }) => {
-    const clubId = await requireAdminClubId(locals.user?.id);
+  decline: async ({ request, locals, cookies }) => {
+    const clubId = await requireAdminClubId(locals, cookies);
     const fd = await request.formData();
     const id = fd.get('id') as string;
 

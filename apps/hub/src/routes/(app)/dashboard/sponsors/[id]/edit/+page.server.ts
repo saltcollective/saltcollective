@@ -1,5 +1,6 @@
 import { redirect, fail, error } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { getClubAccess } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ parent, params }) => {
@@ -27,16 +28,13 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 };
 
 export const actions: Actions = {
-  update: async ({ request, locals, params }) => {
+  update: async ({ request, locals, params, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id },
-      select: { club: { select: { id: true } } },
-    });
-    if (!membership) redirect(302, '/onboarding/club');
+    const access = await getClubAccess(locals, cookies);
+    if (!access) redirect(302, '/onboarding/club');
 
-    const clubId = membership.club.id;
+    const clubId = access.club.id;
 
     const business = await prisma.business.findFirst({
       where: { id: params.id, clubId },
@@ -95,17 +93,14 @@ export const actions: Actions = {
     redirect(302, '/dashboard/sponsors');
   },
 
-  delete: async ({ locals, params }) => {
+  delete: async ({ locals, params, cookies }) => {
     if (!locals.user) redirect(302, '/sign-in');
 
-    const membership = await prisma.clubMembership.findFirst({
-      where: { userId: locals.user.id },
-      select: { club: { select: { id: true } } },
-    });
-    if (!membership) redirect(302, '/onboarding/club');
+    const access = await getClubAccess(locals, cookies);
+    if (!access) redirect(302, '/onboarding/club');
 
     const business = await prisma.business.findFirst({
-      where: { id: params.id, clubId: membership.club.id },
+      where: { id: params.id, clubId: access.club.id },
       select: { id: true },
     });
     if (!business) error(404, 'Sponsor not found');
