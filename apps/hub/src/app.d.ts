@@ -13,6 +13,7 @@ declare global {
         email: string;
         userType: UserType;
         isActive: boolean;
+        lastActiveAt: Date | null;
       } | null;
     }
     // interface PageData {}

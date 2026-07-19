@@ -1,6 +1,7 @@
 import { redirect, fail, error } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { sendInviteEmail } from '$lib/server/email';
+import { logAudit } from '$lib/server/audit';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ parent, locals }) => {
@@ -147,7 +148,7 @@ export const actions: Actions = {
 
     const membership = await prisma.clubMembership.findFirst({
       where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true } } },
+      select: { club: { select: { id: true, name: true } } },
     });
     if (!membership) return fail(403, { action: 'role' as const, error: 'Admin access required' });
 
@@ -162,7 +163,7 @@ export const actions: Actions = {
 
     const target = await prisma.clubMembership.findFirst({
       where: { id: membershipId, clubId },
-      select: { id: true, role: true },
+      select: { id: true, role: true, user: { select: { email: true } } },
     });
     if (!target) return fail(404, { action: 'role' as const, error: 'Member not found' });
 
@@ -176,6 +177,14 @@ export const actions: Actions = {
 
     if (target.role !== role) {
       await prisma.clubMembership.update({ where: { id: target.id }, data: { role } });
+      await logAudit({
+        entityType: 'CLUB',
+        entityId: clubId,
+        entityName: membership.club.name,
+        type: 'MEMBER_ROLE_CHANGED',
+        actor: { id: locals.user.id, email: locals.user.email },
+        detail: `${target.user.email}: ${target.role} → ${role}`,
+      });
     }
 
     return { action: 'role' as const, success: true };
@@ -186,7 +195,7 @@ export const actions: Actions = {
 
     const membership = await prisma.clubMembership.findFirst({
       where: { userId: locals.user.id, role: 'ADMIN' },
-      select: { club: { select: { id: true } } },
+      select: { club: { select: { id: true, name: true } } },
     });
     if (!membership) return fail(403, { action: 'remove' as const, error: 'Admin access required' });
 
@@ -197,7 +206,7 @@ export const actions: Actions = {
 
     const target = await prisma.clubMembership.findFirst({
       where: { id: membershipId, clubId },
-      select: { id: true, role: true, userId: true },
+      select: { id: true, role: true, userId: true, user: { select: { email: true } } },
     });
     if (!target) return fail(404, { action: 'remove' as const, error: 'Member not found' });
 
@@ -213,6 +222,14 @@ export const actions: Actions = {
     }
 
     await prisma.clubMembership.delete({ where: { id: target.id } });
+    await logAudit({
+      entityType: 'CLUB',
+      entityId: clubId,
+      entityName: membership.club.name,
+      type: 'MEMBER_REMOVED',
+      actor: { id: locals.user.id, email: locals.user.email },
+      detail: `${target.user.email} removed (was ${target.role})`,
+    });
 
     return { action: 'remove' as const, success: true };
   },

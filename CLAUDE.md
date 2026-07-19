@@ -269,6 +269,12 @@ Clerk via `svelte-clerk`. All auth logic lives in `apps/hub`. No auth-specific c
 - `locals.user` is populated by `hooks.server.ts` for every authenticated request — use this for auth checks in server routes and load functions
 - **Deactivation:** `User.isActive` is enforced two ways — deactivating (via `/admin/users`) bans the user at Clerk (`clerkClient.users.banUser`, blocking fresh sign-ins), and the `(app)`, `admin`, and `onboarding` layouts redirect already-live inactive sessions to `/account-deactivated`. Reactivating unbans. **Deleting** a user removes both the DB row and the Clerk account — a DB-only delete would be undone by the hooks' auto-provisioning on the user's next sign-in.
 
+## Audit events
+
+`AuditEvent` is an append-only lifecycle log (club created/published/suspended/reactivated/deleted; user created/deactivated/reactivated/type-changed/deleted; member joined/removed/role-changed — **no content edits by design**). It deliberately has **no FK relations**: `entityId` is a plain string and `entityName`/`actorEmail` are snapshots, so rows survive the hard-delete transactions in `/admin/clubs` and `/admin/users`. Write events via `logAudit()` in `apps/hub/src/lib/server/audit.ts` — it swallows its own failures so auditing never breaks the action being recorded. Surfaced as the "Recent activity" card on `/admin/dashboard`.
+
+Denormalised lifecycle columns: `User.lastActiveAt` (maintained by `hooks.server.ts`, throttled to one write per user per hour, shown on `/admin/users`), `Club.suspendedAt` (set/cleared by `/admin/clubs` suspend), `Club.paidUntil` (nullable — reserved for Stripe).
+
 ## Known performance issue — sequential DB round-trips
 
 Every `(app)` page server calls `await parent()` to get `club.id`, which means page queries cannot start until the layout's `clubMembership.findFirst` completes. This causes two sequential Prisma Accelerate round-trips on every dashboard page load.
@@ -311,6 +317,7 @@ This is the standard process for **every** schema change — always create a mig
    deno task --tunnel db:migrate
    ```
    Prisma diffs the schema against the last migration, prompts for a migration name, writes the SQL file under `packages/schema/prisma/migrations/`, and applies it to the dev database. The `--tunnel` flag injects `DATABASE_URL`/`PRISMA_URL`.
+   **Then run `deno task db:generate` again** — `migrate dev` finishes with a plain `prisma generate` (no `--no-engine`), clobbering the engine-less client and causing a `prisma:warn … --no-engine` warning on the next dev-server boot. Re-running the task restores the correct client.
 3. **Commit the migration file** alongside the schema change and **push to `main`**.
 4. **CD deploys it.** The deploy hook runs `prisma generate`, then `deno task db:migrate:deploy` (`prisma migrate deploy`) applies any pending migration files to production. No `--tunnel` in CD — Deno Deploy injects the env automatically.
 
@@ -322,11 +329,15 @@ Last audited 2026-07-18. All screens exist; remaining work is depth, verificatio
 
 ### Priority — functional gaps
 
-1. **Admin user management** — `/admin/users` is a read-only list. Needs actions: change `UserType`, suspend/delete.
-2. **Impersonation** — no way for a SITE_ADMIN to view/operate a club's hub as that club. Needed for support. Design carefully (audit trail, clear "impersonating" banner, scoped session). The schema already has an `ImpersonationLog` model to build on.
-3. **Admin club detail view** — `/admin/clubs` now has suspend/delete actions but no per-club detail screen (members, sponsors, activity at a glance).
-4. **Audit/lifecycle tracking for clubs and users** — a table (or tables) tracking key lifecycle dates per club and per user: last active, paid until, last deactivation/suspension, etc. Surfaced in the admin club detail view and `/admin/users`. Design note: decide between denormalised timestamp columns on `Club`/`User` (cheap to query, good for "paid until") vs an append-only audit-event table (full history, good for "who suspended this and when") — likely both: columns for current state, events for history. Ties into Stripe (paid until) and impersonation (`ImpersonationLog` is a special case of the same idea).
-5. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
+1. **Impersonation** — no way for a SITE_ADMIN to view/operate a club's hub as that club. Needed for support. Design carefully (audit trail, clear "impersonating" banner, scoped session). The schema already has an `ImpersonationLog` model to build on.
+2. **Admin club detail view** — `/admin/clubs` now has suspend/delete actions but no per-club detail screen (members, sponsors, activity at a glance).
+3. **Audit/lifecycle tracking for clubs and users** — a table (or tables) tracking key lifecycle dates per club and per user: last active, paid until, last deactivation/suspension, etc. Surfaced in the admin club detail view and `/admin/users`. Design note: decide between denormalised timestamp columns on `Club`/`User` (cheap to query, good for "paid until") vs an append-only audit-event table (full history, good for "who suspended this and when") — likely both: columns for current state, events for history. Ties into Stripe (paid until) and impersonation (`ImpersonationLog` is a special case of the same idea).
+4. **Multi-club administration** — the schema already allows a user to hold multiple `ClubMembership`s, but the app assumes one: `(app)/+layout.server.ts` picks the first membership (`findFirst`) and there is no way to switch clubs. Needs a club switcher in the hub shell, a persisted "active club" (cookie or URL), and an audit of every `(app)` page + form action that resolves the club via `findFirst` so they scope to the active club instead. Onboarding also blocks users with an existing published club from creating another.
+5. **Club billing lifecycle management** — track each club's billing state: last payment date/amount, next billing date, `paidUntil` (column already exists), plan, payment status. Clubs that fall out of a billing cycle get suspended — but today a suspended club's dashboard gives **no indication at all**: the club admin can keep editing while their public hub 404s. Two halves:
+   - **Data**: billing fields on `Club` (or a `ClubBilling` model) — last payment, next billing date, plan; written by Stripe webhooks once that lands, settable manually by site admins until then. Emit audit events (`CLUB_PAYMENT_RECORDED`, `CLUB_BILLING_LAPSED`) into `AuditEvent`. Lapse → suspension can start as a manual admin action and later become a scheduled job.
+   - **Dashboard visibility**: the `(app)` layout already receives the club — surface `status` (and `paidUntil`/next billing date) as a prominent banner on the club dashboard when `SUSPENDED` ("Your hub is not publicly visible — billing has lapsed" + renewal CTA) and a subtler upcoming-renewal note when active. Also show status in `dashboard/settings`.
+   Depends on Stripe for automation but the fields, manual admin controls, and the dashboard banner are buildable now.
+6. **Admin activity browser** — `/admin/activity`: browsable, searchable view over `AuditEvent` (the dashboard card only shows the latest 15). Filter chips for entity type + event type, text search on entity name / actor email, date range, take/skip pagination — the table's indexes already support this; follow the `/admin/users` toolbar pattern. Accept `?entity=CLUB&id=...` URL params so the future admin club detail view (item 2) can deep-link a pre-filtered per-entity history instead of rebuilding it.
 
 ### Verification
 
@@ -344,6 +355,7 @@ All manually verified by Liam on 2026-07-19 (dev server, step-by-step walkthroug
 
 ### Done (recent)
 
+- **Admin user management** (2026-07-19, verified by Liam) — `/admin/users` rows have a platform-role select (guards: not self, never zero site admins), Deactivate/Reactivate (Clerk ban/unban + `isActive` flag; live sessions bounce to `/account-deactivated` via the three layout checks), and Delete (type-the-email; deletes Clerk account first, then DB row — blocked while target is a site admin, sole club ADMIN, or discount-code creator). See the Auth section for the deactivation/delete semantics.
 - **Admin club management** (2026-07-19, verified by Liam) — `/admin/clubs` rows have Suspend/Reactivate (confirm dialog) and Delete (type-the-slug confirmation; transaction removes click events, invites, memberships, businesses, tiers, tags, disconnects any redeemed discount code — the schema has no `onDelete` cascades). Public hub + sponsor pages now 404 for `SUSPENDED` clubs (previously `status` was never checked, so suspension did nothing). Detail view still on the roadmap.
 
 - **Analytics export** (2026-07-19, verified by Liam) — `GET /admin/analytics/export` (SITE_ADMIN, all clubs, last 90 days) and `GET /dashboard/analytics/export?period=` (club-scoped, honours the page's period filter) return CSV downloads; both Export buttons wired. Note: `+server.ts` endpoints don't inherit layout guards — each endpoint enforces its own auth.

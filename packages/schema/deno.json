@@ -14,5 +14,10 @@
     "db:migrate:resolve": "deno run -A npm:prisma migrate resolve",
     "db:migrate:deploy": "deno run -A npm:prisma migrate deploy",
     "db:studio": "deno run -A npm:prisma studio"
+  },
+  "deploy": {
+    "org": "saltcollective",
+    "app": "saltcollective"
   }
 }
+

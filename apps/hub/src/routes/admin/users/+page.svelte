@@ -101,6 +101,7 @@
           <th>Role</th>
           <th>Clubs</th>
           <th>Status</th>
+          <th>Last active</th>
           <th>Joined</th>
           <th></th>
         </tr>
@@ -155,6 +156,7 @@
                 {userStatus(user)}
               </span>
             </td>
+            <td class="adm-cell-muted">{user.lastActiveAt ? fmt(user.lastActiveAt) : '—'}</td>
             <td class="adm-cell-muted">{fmt(user.createdAt)}</td>
             <td class="adm-cell-action">
               {#if !isSelf}
@@ -206,7 +208,7 @@
         {/each}
         {#if filtered.length === 0}
           <tr>
-            <td colspan="6" class="empty">No users match your search.</td>
+            <td colspan="7" class="empty">No users match your search.</td>
           </tr>
         {/if}
       </tbody>

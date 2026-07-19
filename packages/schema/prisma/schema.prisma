@@ -27,6 +27,7 @@ model User {
   userType      UserType  @default(MEMBER)
   isActive      Boolean   @default(true)
   deactivatedAt DateTime?
+  lastActiveAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -47,6 +48,45 @@ model ClubMembership {
   club Club @relation(fields: [clubId], references: [id])
 
   @@unique([userId, clubId])
+}
+
+enum AuditEntityType {
+  CLUB
+  USER
+}
+
+enum AuditEventType {
+  CLUB_CREATED
+  CLUB_PUBLISHED
+  CLUB_SUSPENDED
+  CLUB_REACTIVATED
+  CLUB_DELETED
+  USER_CREATED
+  USER_DEACTIVATED
+  USER_REACTIVATED
+  USER_DELETED
+  USER_TYPE_CHANGED
+  MEMBER_JOINED
+  MEMBER_REMOVED
+  MEMBER_ROLE_CHANGED
+}
+
+// Append-only lifecycle audit log. Deliberately no FK relations: rows must
+// survive hard-deletion of the club/user they describe, so ids are plain
+// strings and entityName/actorEmail are point-in-time snapshots.
+model AuditEvent {
+  id         String          @id @default(cuid())
+  entityType AuditEntityType
+  entityId   String
+  entityName String
+  type       AuditEventType
+  actorId    String?
+  actorEmail String?
+  detail     String?
+  createdAt  DateTime        @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([createdAt])
 }
 
 model ImpersonationLog {
@@ -84,6 +124,8 @@ model Club {
   colorScheme      ColorScheme @default(SYSTEM)
   status           ClubStatus  @default(ACTIVE)
   publishedAt      DateTime?
+  suspendedAt      DateTime?
+  paidUntil        DateTime?
   stripeCustomerId String?    @unique
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt

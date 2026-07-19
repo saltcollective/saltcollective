@@ -1,5 +1,6 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { logAudit } from '$lib/server/audit';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -42,6 +43,18 @@ export const actions: Actions = {
           data: { status: 'ACCEPTED' },
         }),
       ]);
+      const club = await prisma.club.findUnique({
+        where: { id: invite.clubId },
+        select: { name: true },
+      });
+      await logAudit({
+        entityType: 'CLUB',
+        entityId: invite.clubId,
+        entityName: club?.name ?? invite.clubId,
+        type: 'MEMBER_JOINED',
+        actor: { id: locals.user.id, email: locals.user.email },
+        detail: `${locals.user.email} joined as ${invite.role}`,
+      });
     } catch {
       // Already a member — still mark invite accepted and continue
       await prisma.clubInvite.update({

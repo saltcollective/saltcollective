@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { logAudit } from '$lib/server/audit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -14,7 +15,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   });
   if (!membership) redirect(302, '/onboarding/club');
 
-  await prisma.club.updateMany({
+  const published = await prisma.club.updateMany({
     where: { id: clubId, publishedAt: null },
     data: { publishedAt: new Date() },
   });
@@ -23,6 +24,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     where: { id: clubId },
     select: { name: true, slug: true },
   });
+
+  if (published.count > 0) {
+    await logAudit({
+      entityType: 'CLUB',
+      entityId: clubId,
+      entityName: club.name,
+      type: 'CLUB_PUBLISHED',
+      actor: { id: locals.user.id, email: locals.user.email },
+    });
+  }
 
   return { clubName: club.name, slug: club.slug };
 };

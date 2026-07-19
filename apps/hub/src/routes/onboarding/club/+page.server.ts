@@ -1,6 +1,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { RESERVED_SLUGS } from '$lib/server/reserved-slugs';
+import { logAudit } from '$lib/server/audit';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -44,6 +45,13 @@ export const actions: Actions = {
     const club = await prisma.club.create({ data: { name, slug, tagline } });
     await prisma.clubMembership.create({
       data: { userId: locals.user.id, clubId: club.id, role: 'ADMIN' },
+    });
+    await logAudit({
+      entityType: 'CLUB',
+      entityId: club.id,
+      entityName: club.name,
+      type: 'CLUB_CREATED',
+      actor: { id: locals.user.id, email: locals.user.email },
     });
 
     redirect(302, `/onboarding/branding?club=${club.id}`);

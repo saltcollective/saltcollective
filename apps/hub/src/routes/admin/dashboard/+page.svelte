@@ -6,9 +6,35 @@
 
   const stats = $derived(data.stats);
   const recentClubs = $derived(data.recentClubs);
+  const recentActivity = $derived(data.recentActivity);
+
+  const EVENT_LABELS: Record<string, string> = {
+    CLUB_CREATED: 'Club created',
+    CLUB_PUBLISHED: 'Club published',
+    CLUB_SUSPENDED: 'Club suspended',
+    CLUB_REACTIVATED: 'Club reactivated',
+    CLUB_DELETED: 'Club deleted',
+    USER_CREATED: 'User signed up',
+    USER_DEACTIVATED: 'User deactivated',
+    USER_REACTIVATED: 'User reactivated',
+    USER_DELETED: 'User deleted',
+    USER_TYPE_CHANGED: 'Platform role changed',
+    MEMBER_JOINED: 'Member joined',
+    MEMBER_REMOVED: 'Member removed',
+    MEMBER_ROLE_CHANGED: 'Member role changed',
+  };
 
   function fmt(date: Date | string) {
     return new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(date));
+  }
+
+  function fmtTime(date: Date | string) {
+    return new Intl.DateTimeFormat('en-AU', {
+      day: 'numeric',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(new Date(date));
   }
 
   function initials(name: string) {
@@ -129,6 +155,34 @@
       </div>
     </section>
   </div>
+
+  <section class="adm-card">
+    <header class="adm-card-header">
+      <h2 class="adm-card-title">Recent activity</h2>
+      <span class="adm-card-meta">Lifecycle events</span>
+    </header>
+    {#if recentActivity.length === 0}
+      <p class="empty">No activity recorded yet.</p>
+    {:else}
+      <ul class="activity-list">
+        {#each recentActivity as event (event.id)}
+          <li class="activity-row">
+            <div class="activity-main">
+              <span class="activity-label">{EVENT_LABELS[event.type] ?? event.type}</span>
+              <span class="activity-entity">{event.entityName}</span>
+              {#if event.detail}
+                <span class="activity-detail">{event.detail}</span>
+              {/if}
+            </div>
+            <div class="activity-meta">
+              {#if event.actorEmail}<span>{event.actorEmail}</span>{/if}
+              <span>{fmtTime(event.createdAt)}</span>
+            </div>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
 </div>
 
 <style>
@@ -137,6 +191,56 @@
     text-align: center;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .activity-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .activity-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+  }
+
+  .activity-row:last-child {
+    border-bottom: none;
+  }
+
+  .activity-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: baseline;
+    min-width: 0;
+  }
+
+  .activity-label {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .activity-entity {
+    color: var(--color-accent);
+  }
+
+  .activity-detail {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .activity-meta {
+    display: flex;
+    gap: var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    flex-shrink: 0;
   }
 
   .overview-grid {

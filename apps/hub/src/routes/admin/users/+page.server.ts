@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
 import { clerkClient } from 'svelte-clerk/server';
+import { logAudit } from '$lib/server/audit';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -12,6 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
       username: true,
       userType: true,
       isActive: true,
+      lastActiveAt: true,
       createdAt: true,
       memberships: {
         select: {
@@ -49,7 +51,7 @@ export const actions: Actions = {
 
     const target = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, userType: true },
+      select: { id: true, userType: true, email: true },
     });
     if (!target) return fail(404, { error: 'User not found' });
 
@@ -62,6 +64,14 @@ export const actions: Actions = {
 
     if (target.userType !== userType) {
       await prisma.user.update({ where: { id: userId }, data: { userType } });
+      await logAudit({
+        entityType: 'USER',
+        entityId: target.id,
+        entityName: target.email,
+        type: 'USER_TYPE_CHANGED',
+        actor: { id: actor.id, email: actor.email },
+        detail: `${target.userType} → ${userType}`,
+      });
     }
 
     return { success: true };
@@ -106,6 +116,13 @@ export const actions: Actions = {
       data: active
         ? { isActive: true, deactivatedAt: null }
         : { isActive: false, deactivatedAt: new Date() },
+    });
+    await logAudit({
+      entityType: 'USER',
+      entityId: target.id,
+      entityName: target.email,
+      type: active ? 'USER_REACTIVATED' : 'USER_DEACTIVATED',
+      actor: { id: actor.id, email: actor.email },
     });
 
     return { success: true };
@@ -178,6 +195,14 @@ export const actions: Actions = {
       prisma.clubMembership.deleteMany({ where: { userId } }),
       prisma.user.delete({ where: { id: userId } }),
     ]);
+
+    await logAudit({
+      entityType: 'USER',
+      entityId: userId,
+      entityName: target.email,
+      type: 'USER_DELETED',
+      actor: { id: actor.id, email: actor.email },
+    });
 
     return { success: true };
   },
