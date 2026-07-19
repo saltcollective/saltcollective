@@ -120,6 +120,9 @@
             <td class="adm-cell-muted">{fmt(club.createdAt)}</td>
             <td class="adm-cell-action">
               <div class="row-actions">
+                <a class="sc-btn sc-btn-ghost sc-btn-sm" href="/admin/activity?entity=CLUB&id={club.id}">
+                  Activity
+                </a>
                 <form
                   method="POST"
                   action="?/setStatus"

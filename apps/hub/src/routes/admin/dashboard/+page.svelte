@@ -1,5 +1,6 @@
 <script lang="ts">
   import { siteDomain } from '$lib/domain';
+  import { EVENT_LABELS, fmtTime } from '$lib/audit-labels';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -8,33 +9,8 @@
   const recentClubs = $derived(data.recentClubs);
   const recentActivity = $derived(data.recentActivity);
 
-  const EVENT_LABELS: Record<string, string> = {
-    CLUB_CREATED: 'Club created',
-    CLUB_PUBLISHED: 'Club published',
-    CLUB_SUSPENDED: 'Club suspended',
-    CLUB_REACTIVATED: 'Club reactivated',
-    CLUB_DELETED: 'Club deleted',
-    USER_CREATED: 'User signed up',
-    USER_DEACTIVATED: 'User deactivated',
-    USER_REACTIVATED: 'User reactivated',
-    USER_DELETED: 'User deleted',
-    USER_TYPE_CHANGED: 'Platform role changed',
-    MEMBER_JOINED: 'Member joined',
-    MEMBER_REMOVED: 'Member removed',
-    MEMBER_ROLE_CHANGED: 'Member role changed',
-  };
-
   function fmt(date: Date | string) {
     return new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(date));
-  }
-
-  function fmtTime(date: Date | string) {
-    return new Intl.DateTimeFormat('en-AU', {
-      day: 'numeric',
-      month: 'short',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(new Date(date));
   }
 
   function initials(name: string) {
@@ -159,7 +135,7 @@
   <section class="adm-card">
     <header class="adm-card-header">
       <h2 class="adm-card-title">Recent activity</h2>
-      <span class="adm-card-meta">Lifecycle events</span>
+      <a href="/admin/activity" class="adm-link">View all →</a>
     </header>
     {#if recentActivity.length === 0}
       <p class="empty">No activity recorded yet.</p>

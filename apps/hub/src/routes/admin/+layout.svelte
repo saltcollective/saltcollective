@@ -16,6 +16,7 @@
       items: [
         { href: '/admin/dashboard', label: 'Dashboard', icon: 'grid' },
         { href: '/admin/analytics', label: 'Analytics', icon: 'chart' },
+        { href: '/admin/activity',  label: 'Activity',  icon: 'layers' },
       ],
     },
     {

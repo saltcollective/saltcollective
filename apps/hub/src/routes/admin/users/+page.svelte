@@ -159,8 +159,11 @@
             <td class="adm-cell-muted">{user.lastActiveAt ? fmt(user.lastActiveAt) : '—'}</td>
             <td class="adm-cell-muted">{fmt(user.createdAt)}</td>
             <td class="adm-cell-action">
-              {#if !isSelf}
-                <div class="row-actions">
+              <div class="row-actions">
+                <a class="sc-btn sc-btn-ghost sc-btn-sm" href="/admin/activity?entity=USER&id={user.id}">
+                  Activity
+                </a>
+                {#if !isSelf}
                   <form
                     method="POST"
                     action="?/setActive"
@@ -201,8 +204,8 @@
                     <input type="hidden" name="userId" value={user.id} />
                     <button class="sc-btn sc-btn-ghost sc-btn-sm danger" type="submit">Delete</button>
                   </form>
-                </div>
-              {/if}
+                {/if}
+              </div>
             </td>
           </tr>
         {/each}
