@@ -103,7 +103,9 @@
               <div class="adm-row-main">
                 <div class="adm-club-mark">{initials(club.name)}</div>
                 <div>
-                  <div class="adm-row-title">{club.name}</div>
+                  <div class="adm-row-title">
+                    <a class="adm-row-link" href="/admin/clubs/{club.id}">{club.name}</a>
+                  </div>
                   <div class="adm-row-sub">
                     <a class="adm-row-link" href="/{club.slug}" target="_blank" rel="noopener">{siteDomain}/{club.slug}</a>
                   </div>

@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
-import { logAudit } from '$lib/server/audit';
+import { setClubStatus, deleteClub } from '$lib/server/admin-clubs';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -33,26 +33,11 @@ export const actions: Actions = {
     const status = rawStatus === 'ACTIVE' || rawStatus === 'SUSPENDED' ? rawStatus : null;
     if (!clubId || !status) return fail(400, { error: 'Invalid request' });
 
-    const club = await prisma.club.findUnique({
-      where: { id: clubId },
-      select: { id: true, name: true },
+    const result = await setClubStatus(clubId, status, {
+      id: locals.user.id,
+      email: locals.user.email,
     });
-    if (!club) return fail(404, { error: 'Club not found' });
-
-    await prisma.club.update({
-      where: { id: clubId },
-      data:
-        status === 'SUSPENDED'
-          ? { status, suspendedAt: new Date() }
-          : { status, suspendedAt: null },
-    });
-    await logAudit({
-      entityType: 'CLUB',
-      entityId: clubId,
-      entityName: club.name,
-      type: status === 'SUSPENDED' ? 'CLUB_SUSPENDED' : 'CLUB_REACTIVATED',
-      actor: { id: locals.user.id, email: locals.user.email },
-    });
+    if (!result.ok) return fail(404, { error: result.error });
 
     return { success: true };
   },
@@ -67,35 +52,8 @@ export const actions: Actions = {
     const clubId = fd.get('clubId') as string;
     if (!clubId) return fail(400, { error: 'Invalid request' });
 
-    const club = await prisma.club.findUnique({
-      where: { id: clubId },
-      select: { id: true, name: true },
-    });
-    if (!club) return fail(404, { error: 'Club not found' });
-
-    // No onDelete cascades in the schema — remove dependents in FK order.
-    // Implicit business↔tag join rows cascade with the businesses/tags themselves.
-    await prisma.$transaction([
-      prisma.clickEvent.deleteMany({ where: { clubId } }),
-      prisma.clubInvite.deleteMany({ where: { clubId } }),
-      prisma.clubMembership.deleteMany({ where: { clubId } }),
-      prisma.business.deleteMany({ where: { clubId } }),
-      prisma.sponsorTier.deleteMany({ where: { clubId } }),
-      prisma.tag.deleteMany({ where: { clubId } }),
-      prisma.discountCode.updateMany({
-        where: { redeemedByClubId: clubId },
-        data: { redeemedByClubId: null },
-      }),
-      prisma.club.delete({ where: { id: clubId } }),
-    ]);
-
-    await logAudit({
-      entityType: 'CLUB',
-      entityId: clubId,
-      entityName: club.name,
-      type: 'CLUB_DELETED',
-      actor: { id: locals.user.id, email: locals.user.email },
-    });
+    const result = await deleteClub(clubId, { id: locals.user.id, email: locals.user.email });
+    if (!result.ok) return fail(404, { error: result.error });
 
     return { success: true };
   },
