@@ -342,7 +342,7 @@ All manually verified by Liam on 2026-07-19 (dev server, step-by-step walkthroug
 
 ### Done (recent)
 
-- **Analytics export** (2026-07-19) — `GET /admin/analytics/export` (SITE_ADMIN, all clubs, last 90 days) and `GET /dashboard/analytics/export?period=` (club-scoped, honours the page's period filter) return CSV downloads; both Export buttons wired. Note: `+server.ts` endpoints don't inherit layout guards — each endpoint enforces its own auth.
+- **Analytics export** (2026-07-19, verified by Liam) — `GET /admin/analytics/export` (SITE_ADMIN, all clubs, last 90 days) and `GET /dashboard/analytics/export?period=` (club-scoped, honours the page's period filter) return CSV downloads; both Export buttons wired. Note: `+server.ts` endpoints don't inherit layout guards — each endpoint enforces its own auth.
 
 ### Testing
 
