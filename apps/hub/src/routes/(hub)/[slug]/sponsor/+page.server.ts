@@ -17,13 +17,14 @@ export const load: PageServerLoad = async ({ params }) => {
       backgroundColour: true,
       colorScheme: true,
       publishedAt: true,
+      status: true,
       sponsorTiers: { orderBy: { order: 'asc' }, select: { id: true, name: true } },
     },
   });
 
-  if (!club || !club.publishedAt) error(404, 'Hub not found');
+  if (!club || !club.publishedAt || club.status !== 'ACTIVE') error(404, 'Hub not found');
 
-  const { sponsorTiers, publishedAt: _publishedAt, ...rest } = club;
+  const { sponsorTiers, publishedAt: _publishedAt, status: _status, ...rest } = club;
   return { club: rest, tiers: sponsorTiers };
 };
 

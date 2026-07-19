@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import { siteDomain } from '$lib/domain';
-  import type { PageData } from './$types';
+  import type { PageData, ActionData } from './$types';
 
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 
   let search = $state('');
   let activeFilter = $state<'all' | 'ACTIVE' | 'SUSPENDED'>('all');
@@ -118,7 +119,47 @@
             </td>
             <td class="adm-cell-muted">{fmt(club.createdAt)}</td>
             <td class="adm-cell-action">
-              <button class="sc-btn sc-btn-ghost sc-btn-sm">Manage</button>
+              <div class="row-actions">
+                <form
+                  method="POST"
+                  action="?/setStatus"
+                  use:enhance={({ cancel }) => {
+                    if (
+                      club.status === 'ACTIVE' &&
+                      !confirm(`Suspend ${club.name}? Their public hub will be hidden until reactivated.`)
+                    ) {
+                      cancel();
+                      return;
+                    }
+                    return ({ update }) => update();
+                  }}
+                >
+                  <input type="hidden" name="clubId" value={club.id} />
+                  <input type="hidden" name="status" value={club.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'} />
+                  <button class="sc-btn sc-btn-ghost sc-btn-sm" type="submit">
+                    {club.status === 'ACTIVE' ? 'Suspend' : 'Reactivate'}
+                  </button>
+                </form>
+                <form
+                  method="POST"
+                  action="?/delete"
+                  use:enhance={({ cancel }) => {
+                    const expected = club.slug;
+                    const typed = prompt(
+                      `This permanently deletes ${club.name} — all sponsors, tiers, members, invites and analytics.\n\nType the club slug "${expected}" to confirm:`
+                    );
+                    if (typed !== expected) {
+                      if (typed !== null) alert('Slug did not match — nothing was deleted.');
+                      cancel();
+                      return;
+                    }
+                    return ({ update }) => update();
+                  }}
+                >
+                  <input type="hidden" name="clubId" value={club.id} />
+                  <button class="sc-btn sc-btn-ghost sc-btn-sm danger" type="submit">Delete</button>
+                </form>
+              </div>
             </td>
           </tr>
         {/each}
@@ -131,6 +172,10 @@
     </table>
   </section>
 
+  {#if form && 'error' in form && form.error}
+    <p class="action-error">{form.error}</p>
+  {/if}
+
   <footer class="adm-tablefoot">
     <span>Showing {filtered.length} of {data.clubs.length}</span>
   </footer>
@@ -142,5 +187,21 @@
     text-align: center;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .row-actions {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
+  }
+
+  .row-actions .danger {
+    color: var(--color-destructive, #f87171);
+  }
+
+  .action-error {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-destructive, #f87171);
   }
 </style>

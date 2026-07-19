@@ -16,11 +16,12 @@ export const load: PageServerLoad = async ({ params, setHeaders }) => {
       backgroundColour: true,
       colorScheme: true,
       publishedAt: true,
+      status: true,
     },
     cacheStrategy: { ttl: 60, swr: 300, tags: [`club_${params.slug.replace(/[^a-zA-Z0-9_]/g, '_')}`] },
   });
 
-  if (!club || !club.publishedAt) error(404, 'Hub not found');
+  if (!club || !club.publishedAt || club.status !== 'ACTIVE') error(404, 'Hub not found');
 
   const tiers = await prisma.sponsorTier.findMany({
     where: { clubId: club.id },
