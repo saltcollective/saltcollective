@@ -267,6 +267,7 @@ Clerk via `svelte-clerk`. All auth logic lives in `apps/hub`. No auth-specific c
 - Sign-up page: `apps/hub/src/routes/sign-up/[...catchall]/+page.svelte`
 - Sign-in/sign-up URLs are configured on `<ClerkProvider>` in the root `+layout.svelte`
 - `locals.user` is populated by `hooks.server.ts` for every authenticated request — use this for auth checks in server routes and load functions
+- **Deactivation:** `User.isActive` is enforced two ways — deactivating (via `/admin/users`) bans the user at Clerk (`clerkClient.users.banUser`, blocking fresh sign-ins), and the `(app)`, `admin`, and `onboarding` layouts redirect already-live inactive sessions to `/account-deactivated`. Reactivating unbans. **Deleting** a user removes both the DB row and the Clerk account — a DB-only delete would be undone by the hooks' auto-provisioning on the user's next sign-in.
 
 ## Known performance issue — sequential DB round-trips
 

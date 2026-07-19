@@ -3,6 +3,7 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
   if (!locals.user) redirect(302, '/sign-in');
+  if (!locals.user.isActive) redirect(302, '/account-deactivated');
   if (locals.user.userType !== 'SITE_ADMIN') error(403, 'Access denied');
   return { user: locals.user };
 };

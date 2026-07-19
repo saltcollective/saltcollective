@@ -12,6 +12,7 @@ declare global {
         username: string | null;
         email: string;
         userType: UserType;
+        isActive: boolean;
       } | null;
     }
     // interface PageData {}

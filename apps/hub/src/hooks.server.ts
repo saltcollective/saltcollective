@@ -9,7 +9,7 @@ export const handle = sequence(
     if (userId) {
       let user = await prisma.user.findUnique({
         where: { clerkId: userId },
-        select: { id: true, username: true, email: true, userType: true },
+        select: { id: true, username: true, email: true, userType: true, isActive: true },
       });
 
       if (!user) {
@@ -20,7 +20,7 @@ export const handle = sequence(
             username: clerkUser.username ?? null,
             email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
           },
-          select: { id: true, username: true, email: true, userType: true },
+          select: { id: true, username: true, email: true, userType: true, isActive: true },
         });
       }
 

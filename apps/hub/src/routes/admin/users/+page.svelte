@@ -1,20 +1,14 @@
 <script lang="ts">
-  import type { PageData } from './$types';
+  import { enhance } from '$app/forms';
+  import type { PageData, ActionData } from './$types';
 
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 
   let search = $state('');
   let activeFilter = $state<'all' | 'active' | 'inactive' | 'admin'>('all');
 
   function userStatus(user: (typeof data.users)[number]) {
     return user.isActive ? 'Active' : 'Inactive';
-  }
-
-  function userRole(user: (typeof data.users)[number]) {
-    if (user.userType === 'SITE_ADMIN') return 'Site admin';
-    if (user.memberships.some((m) => m.role === 'ADMIN')) return 'Club admin';
-    if (user.memberships.some((m) => m.role === 'EDITOR')) return 'Editor';
-    return 'Member';
   }
 
   const filtered = $derived(
@@ -108,11 +102,12 @@
           <th>Clubs</th>
           <th>Status</th>
           <th>Joined</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {#each filtered as user (user.id)}
-          {@const role = userRole(user)}
+          {@const isSelf = user.id === data.currentUserId}
           <tr>
             <td>
               <div class="adm-row-main">
@@ -126,9 +121,22 @@
               </div>
             </td>
             <td>
-              <span class="adm-role {role === 'Site admin' ? 'adm-role-site-admin' : ''}">
-                {role}
-              </span>
+              {#if isSelf}
+                <span class="adm-role adm-role-site-admin">Site admin</span>
+              {:else}
+                <form method="POST" action="?/setUserType" use:enhance>
+                  <input type="hidden" name="userId" value={user.id} />
+                  <select
+                    class="type-select"
+                    name="userType"
+                    aria-label="Platform role for {user.email}"
+                    onchange={(e) => e.currentTarget.form?.requestSubmit()}
+                  >
+                    <option value="MEMBER" selected={user.userType === 'MEMBER'}>Member</option>
+                    <option value="SITE_ADMIN" selected={user.userType === 'SITE_ADMIN'}>Site admin</option>
+                  </select>
+                </form>
+              {/if}
             </td>
             <td class="adm-cell-muted">
               {#if user.memberships.length === 0}
@@ -148,16 +156,66 @@
               </span>
             </td>
             <td class="adm-cell-muted">{fmt(user.createdAt)}</td>
+            <td class="adm-cell-action">
+              {#if !isSelf}
+                <div class="row-actions">
+                  <form
+                    method="POST"
+                    action="?/setActive"
+                    use:enhance={({ cancel }) => {
+                      if (
+                        user.isActive &&
+                        !confirm(
+                          `Deactivate ${user.email}? They'll be blocked from signing in until reactivated.`
+                        )
+                      ) {
+                        cancel();
+                        return;
+                      }
+                      return ({ update }) => update();
+                    }}
+                  >
+                    <input type="hidden" name="userId" value={user.id} />
+                    <input type="hidden" name="active" value={user.isActive ? 'false' : 'true'} />
+                    <button class="sc-btn sc-btn-ghost sc-btn-sm" type="submit">
+                      {user.isActive ? 'Deactivate' : 'Reactivate'}
+                    </button>
+                  </form>
+                  <form
+                    method="POST"
+                    action="?/delete"
+                    use:enhance={({ cancel }) => {
+                      const typed = prompt(
+                        `This permanently deletes ${user.email} — their sign-in and club memberships. Club content stays.\n\nType their email to confirm:`
+                      );
+                      if (typed !== user.email) {
+                        if (typed !== null) alert('Email did not match — nothing was deleted.');
+                        cancel();
+                        return;
+                      }
+                      return ({ update }) => update();
+                    }}
+                  >
+                    <input type="hidden" name="userId" value={user.id} />
+                    <button class="sc-btn sc-btn-ghost sc-btn-sm danger" type="submit">Delete</button>
+                  </form>
+                </div>
+              {/if}
+            </td>
           </tr>
         {/each}
         {#if filtered.length === 0}
           <tr>
-            <td colspan="5" class="empty">No users match your search.</td>
+            <td colspan="6" class="empty">No users match your search.</td>
           </tr>
         {/if}
       </tbody>
     </table>
   </section>
+
+  {#if form && 'error' in form && form.error}
+    <p class="action-error">{form.error}</p>
+  {/if}
 
   <footer class="adm-tablefoot">
     <span>Showing {filtered.length} of {data.users.length}</span>
@@ -170,5 +228,39 @@
     text-align: center;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .type-select {
+    height: 32px;
+    padding: 0 var(--space-2);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .type-select:focus {
+    border-color: var(--color-accent);
+  }
+
+  .row-actions {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
+  }
+
+  .row-actions .danger {
+    color: var(--color-destructive, #f87171);
+  }
+
+  .action-error {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-destructive, #f87171);
   }
 </style>
