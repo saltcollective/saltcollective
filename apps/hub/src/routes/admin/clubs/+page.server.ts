@@ -11,6 +11,7 @@ export const load: PageServerLoad = async () => {
       name: true,
       slug: true,
       status: true,
+      publishedAt: true,
       createdAt: true,
       _count: { select: { memberships: true, businesses: true } },
     },

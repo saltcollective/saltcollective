@@ -41,6 +41,29 @@
   </div>
 {/if}
 
+{#if data.club.status === 'SUSPENDED'}
+  <div class="status-banner suspended">
+    <span>
+      <strong>{data.club.name}</strong> is suspended — your public hub is not visible. Contact Salt
+      Collective to reactivate it.
+    </span>
+  </div>
+{:else if !data.club.publishedAt}
+  <div class="status-banner unpublished">
+    <span>
+      <strong>{data.club.name}</strong> isn't live yet — your public hub won't be visible until you
+      publish it.
+    </span>
+    {#if data.role === 'ADMIN'}
+      <form method="POST" action="/api/publish-club">
+        <button type="submit">Publish hub</button>
+      </form>
+    {:else}
+      <span class="status-hint">Ask a club admin to publish it.</span>
+    {/if}
+  </div>
+{/if}
+
 <div class="shell" class:collapsed class:drawerOpen>
   <!-- Mobile top bar -->
   <div class="mobileBar">
@@ -134,6 +157,55 @@
 
   .impersonation-banner button:hover {
     opacity: 0.85;
+  }
+
+  .status-banner {
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+  }
+
+  .status-banner.unpublished {
+    background: color-mix(in srgb, var(--color-accent) 22%, var(--color-bg));
+    border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  }
+
+  .status-banner.suspended {
+    background: color-mix(in srgb, var(--color-destructive) 22%, var(--color-bg));
+    border-bottom: 1px solid color-mix(in srgb, var(--color-destructive) 45%, transparent);
+  }
+
+  .status-banner strong {
+    font-weight: 700;
+  }
+
+  .status-banner button {
+    height: 28px;
+    padding: 0 var(--space-3);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .status-banner button:hover {
+    opacity: 0.85;
+  }
+
+  .status-hint {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
   }
 
   .shell {

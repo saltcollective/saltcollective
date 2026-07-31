@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
-import { setClubStatus, deleteClub } from '$lib/server/admin-clubs';
+import { setClubStatus, deleteClub, publishClub } from '$lib/server/admin-clubs';
 import { logAudit } from '$lib/server/audit';
 import { IMPERSONATION_COOKIE } from '$lib/server/club-access';
 import type { PageServerLoad, Actions } from './$types';
@@ -82,6 +82,21 @@ export const actions: Actions = {
     if (!status) return fail(400, { error: 'Invalid request' });
 
     const result = await setClubStatus(params.id, status, {
+      id: locals.user.id,
+      email: locals.user.email,
+    });
+    if (!result.ok) return fail(404, { error: result.error });
+
+    return { success: true };
+  },
+
+  publish: async ({ locals, params }) => {
+    if (!locals.user) redirect(302, '/sign-in');
+    if (locals.user.userType !== 'SITE_ADMIN') {
+      return fail(403, { error: 'Site admin access required' });
+    }
+
+    const result = await publishClub(params.id, {
       id: locals.user.id,
       email: locals.user.email,
     });

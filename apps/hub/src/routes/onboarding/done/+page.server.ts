@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
-import { logAudit } from '$lib/server/audit';
+import { publishClub } from '$lib/server/admin-clubs';
 import { ACTIVE_CLUB_COOKIE } from '$lib/server/club-access';
 import type { PageServerLoad } from './$types';
 
@@ -16,25 +16,12 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
   });
   if (!membership) redirect(302, '/onboarding/club');
 
-  const published = await prisma.club.updateMany({
-    where: { id: clubId, publishedAt: null },
-    data: { publishedAt: new Date() },
-  });
+  await publishClub(clubId, { id: locals.user.id, email: locals.user.email });
 
   const club = await prisma.club.findUniqueOrThrow({
     where: { id: clubId },
     select: { name: true, slug: true },
   });
-
-  if (published.count > 0) {
-    await logAudit({
-      entityType: 'CLUB',
-      entityId: clubId,
-      entityName: club.name,
-      type: 'CLUB_PUBLISHED',
-      actor: { id: locals.user.id, email: locals.user.email },
-    });
-  }
 
   // Land the user in the club they just finished onboarding.
   cookies.set(ACTIVE_CLUB_COOKIE, clubId, {

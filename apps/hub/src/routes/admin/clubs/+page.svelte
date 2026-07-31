@@ -115,9 +115,13 @@
             <td class="adm-num">{club._count.memberships}</td>
             <td class="adm-num">{club._count.businesses}</td>
             <td>
-              <span class="sc-badge {club.status === 'ACTIVE' ? 'sc-badge-success' : 'sc-badge-default'}">
-                {club.status === 'ACTIVE' ? 'Active' : 'Suspended'}
-              </span>
+              {#if club.status !== 'ACTIVE'}
+                <span class="sc-badge sc-badge-default">Suspended</span>
+              {:else if !club.publishedAt}
+                <span class="sc-badge sc-badge-warning">Not published</span>
+              {:else}
+                <span class="sc-badge sc-badge-success">Active</span>
+              {/if}
             </td>
             <td class="adm-cell-muted">{fmt(club.createdAt)}</td>
             <td class="adm-cell-action">

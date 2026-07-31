@@ -40,9 +40,13 @@
         <div>
           <h1 class="adm-page-title title-row">
             {club.name}
-            <span class="sc-badge {club.status === 'ACTIVE' ? 'sc-badge-success' : 'sc-badge-default'}">
-              {club.status === 'ACTIVE' ? 'Active' : 'Suspended'}
-            </span>
+            {#if club.status !== 'ACTIVE'}
+              <span class="sc-badge sc-badge-default">Suspended</span>
+            {:else if !club.publishedAt}
+              <span class="sc-badge sc-badge-warning">Not published</span>
+            {:else}
+              <span class="sc-badge sc-badge-success">Active</span>
+            {/if}
           </h1>
           <p class="adm-page-sub">
             <a class="adm-row-link" href="/{club.slug}" target="_blank" rel="noopener">{siteDomain}/{club.slug}</a>
@@ -72,6 +76,21 @@
       <a class="sc-btn sc-btn-secondary sc-btn-sm" href="/{club.slug}" target="_blank" rel="noopener">
         View public hub
       </a>
+      {#if !club.publishedAt}
+        <form
+          method="POST"
+          action="?/publish"
+          use:enhance={({ cancel }) => {
+            if (!confirm(`Publish ${club.name}? Their hub at /${club.slug} will become publicly visible.`)) {
+              cancel();
+              return;
+            }
+            return ({ update }) => update();
+          }}
+        >
+          <button class="sc-btn sc-btn-primary sc-btn-sm" type="submit">Publish</button>
+        </form>
+      {/if}
       <form
         method="POST"
         action="?/setStatus"

@@ -32,6 +32,33 @@ export async function setClubStatus(
   return { ok: true };
 }
 
+// Idempotent — publishing an already-published club is a no-op (no duplicate
+// audit event). Called from onboarding's done step, the site-admin club detail
+// page, and the club-admin publish endpoint.
+export async function publishClub(clubId: string, actor: AuditActor): Promise<OpResult> {
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { id: true, name: true },
+  });
+  if (!club) return { error: 'Club not found' };
+
+  const published = await prisma.club.updateMany({
+    where: { id: clubId, publishedAt: null },
+    data: { publishedAt: new Date() },
+  });
+  if (published.count > 0) {
+    await logAudit({
+      entityType: 'CLUB',
+      entityId: clubId,
+      entityName: club.name,
+      type: 'CLUB_PUBLISHED',
+      actor,
+    });
+  }
+
+  return { ok: true };
+}
+
 export async function deleteClub(clubId: string, actor: AuditActor): Promise<OpResult> {
   const club = await prisma.club.findUnique({
     where: { id: clubId },

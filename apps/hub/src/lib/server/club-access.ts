@@ -5,10 +5,26 @@ export const IMPERSONATION_COOKIE = 'impersonation_session';
 export const ACTIVE_CLUB_COOKIE = 'active_club';
 
 export interface ClubAccess {
-  club: { id: string; name: string; slug: string; logoUrl: string | null };
+  club: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+    status: 'ACTIVE' | 'SUSPENDED';
+    publishedAt: Date | null;
+  };
   role: 'ADMIN' | 'EDITOR';
   impersonating: boolean;
 }
+
+const CLUB_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  logoUrl: true,
+  status: true,
+  publishedAt: true,
+} as const;
 
 // Central club resolution for the (app) dashboard: an active impersonation
 // session (SITE_ADMIN only) wins, otherwise the user's own membership.
@@ -28,7 +44,7 @@ export async function getClubAccess(
     if (session) {
       const club = await prisma.club.findUnique({
         where: { id: session.clubId },
-        select: { id: true, name: true, slug: true, logoUrl: true },
+        select: CLUB_SELECT,
       });
       if (club) {
         return { club, role: 'ADMIN', impersonating: true };
@@ -50,7 +66,7 @@ export async function getClubAccess(
       where: { userId: locals.user.id, clubId: activeClubId },
       select: {
         role: true,
-        club: { select: { id: true, name: true, slug: true, logoUrl: true } },
+        club: { select: CLUB_SELECT },
       },
     });
     if (selected) {
@@ -63,7 +79,7 @@ export async function getClubAccess(
     orderBy: { createdAt: 'asc' },
     select: {
       role: true,
-      club: { select: { id: true, name: true, slug: true, logoUrl: true } },
+      club: { select: CLUB_SELECT },
     },
   });
   if (!membership) return null;
