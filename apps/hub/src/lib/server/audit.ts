@@ -1,5 +1,6 @@
 import { prisma } from '@saltcollective/schema';
 import type { AuditEntityType, AuditEventType } from '@saltcollective/schema';
+import { withSpan, recordError } from '$lib/server/telemetry';
 
 export interface AuditActor {
   id: string;
@@ -16,19 +17,31 @@ export async function logAudit(opts: {
   actor?: AuditActor | null;
   detail?: string;
 }) {
-  try {
-    await prisma.auditEvent.create({
-      data: {
-        entityType: opts.entityType,
-        entityId: opts.entityId,
-        entityName: opts.entityName,
-        type: opts.type,
-        actorId: opts.actor?.id ?? null,
-        actorEmail: opts.actor?.email ?? null,
-        detail: opts.detail ?? null,
-      },
-    });
-  } catch (e) {
-    console.error('logAudit failed:', e);
-  }
+  await withSpan(
+    'audit.log',
+    {
+      'app.audit.entityType': opts.entityType,
+      'app.audit.type': opts.type,
+      'app.audit.entityId': opts.entityId,
+    },
+    async (span) => {
+      try {
+        await prisma.auditEvent.create({
+          data: {
+            entityType: opts.entityType,
+            entityId: opts.entityId,
+            entityName: opts.entityName,
+            type: opts.type,
+            actorId: opts.actor?.id ?? null,
+            actorEmail: opts.actor?.email ?? null,
+            detail: opts.detail ?? null,
+          },
+        });
+      } catch (e) {
+        // Swallowed by design — the span's ERROR status is what surfaces it.
+        recordError(span, e);
+        console.error('logAudit failed:', e);
+      }
+    },
+  );
 }

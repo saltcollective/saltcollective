@@ -1,5 +1,6 @@
 import type { Cookies } from '@sveltejs/kit';
 import { prisma } from '@saltcollective/schema';
+import { withSpan, type Span } from '$lib/server/telemetry';
 
 export const IMPERSONATION_COOKIE = 'impersonation_session';
 export const ACTIVE_CLUB_COOKIE = 'active_club';
@@ -35,6 +36,28 @@ export async function getClubAccess(
 ): Promise<ClubAccess | null> {
   if (!locals.user) return null;
 
+  return withSpan('clubAccess.resolve', { 'app.user.id': locals.user.id }, async (span) => {
+    const access = await resolveClubAccess(locals, cookies, span);
+    span.setAttribute('app.club.source', access?.source ?? 'none');
+    if (access) {
+      span.setAttribute('app.club.id', access.club.id);
+      span.setAttribute('app.club.slug', access.club.slug);
+      span.setAttribute('app.club.role', access.role);
+      span.setAttribute('app.impersonating', access.impersonating);
+      locals.requestSpan?.setAttribute('app.club.id', access.club.id);
+      locals.requestSpan?.setAttribute('app.impersonating', access.impersonating);
+    }
+    return access && { club: access.club, role: access.role, impersonating: access.impersonating };
+  });
+}
+
+async function resolveClubAccess(
+  locals: App.Locals,
+  cookies: Cookies,
+  span: Span,
+): Promise<(ClubAccess & { source: string }) | null> {
+  if (!locals.user) return null;
+
   const sessionId = cookies.get(IMPERSONATION_COOKIE);
   if (sessionId && locals.user.userType === 'SITE_ADMIN') {
     const session = await prisma.impersonationLog.findFirst({
@@ -47,7 +70,7 @@ export async function getClubAccess(
         select: CLUB_SELECT,
       });
       if (club) {
-        return { club, role: 'ADMIN', impersonating: true };
+        return { club, role: 'ADMIN', impersonating: true, source: 'impersonation' };
       }
       // Club was deleted mid-session — close the session and fall through.
       await prisma.impersonationLog.update({
@@ -55,6 +78,7 @@ export async function getClubAccess(
         data: { endedAt: new Date() },
       });
       cookies.delete(IMPERSONATION_COOKIE, { path: '/' });
+      span.addEvent('impersonation.staleSessionClosed');
     }
   }
 
@@ -70,7 +94,7 @@ export async function getClubAccess(
       },
     });
     if (selected) {
-      return { club: selected.club, role: selected.role, impersonating: false };
+      return { club: selected.club, role: selected.role, impersonating: false, source: 'activeCookie' };
     }
   }
 
@@ -84,5 +108,5 @@ export async function getClubAccess(
   });
   if (!membership) return null;
 
-  return { club: membership.club, role: membership.role, impersonating: false };
+  return { club: membership.club, role: membership.role, impersonating: false, source: 'firstMembership' };
 }

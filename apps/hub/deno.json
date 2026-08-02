@@ -1,6 +1,7 @@
 {
   "tasks": {
     "dev": "npm run dev",
+    "dev:otel": "OTEL_DENO=true OTEL_EXPORTER_OTLP_PROTOCOL=console deno run -A npm:vite dev",
     "build": "npm run build",
     "preview": "npm run preview",
     "check": "npm run check",

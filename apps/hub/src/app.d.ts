@@ -15,6 +15,7 @@ declare global {
         isActive: boolean;
         lastActiveAt: Date | null;
       } | null;
+      requestSpan?: import('@opentelemetry/api').Span;
     }
     // interface PageData {}
     // interface PageState {}

@@ -1,6 +1,7 @@
 import process from 'node:process';
 import { Resend } from 'resend';
 import { siteDomain, siteUrl } from '$lib/domain';
+import { withSpan } from '$lib/server/telemetry';
 
 const resend = new Resend(process.env.RESEND_KEY);
 const FROM = 'Salt Collective <invites@updates.saltcollective.com>';
@@ -13,11 +14,16 @@ export async function sendInviteEmail(opts: {
 }) {
   const { to, clubName, inviterName, inviteUrl } = opts;
 
-  if (!process.env.RESEND_KEY) {
-    throw new Error('RESEND_KEY is not set — cannot send email');
-  }
+  // No recipient addresses in span attributes — ids/counts/club name only.
+  await withSpan(
+    'email.send',
+    { 'app.email.kind': 'invite', 'app.club.name': clubName, 'app.email.recipients': 1 },
+    async () => {
+      if (!process.env.RESEND_KEY) {
+        throw new Error('RESEND_KEY is not set — cannot send email');
+      }
 
-  const { error } = await resend.emails.send({
+      const { error } = await resend.emails.send({
     from: FROM,
     to,
     subject: `You've been invited to join ${clubName} on Salt Collective`,
@@ -59,11 +65,13 @@ export async function sendInviteEmail(opts: {
 </html>`,
   });
 
-  // Resend v4 returns { error } rather than throwing — surface it so the
-  // caller doesn't report a false success.
-  if (error) {
-    throw new Error(`Resend failed to send invite email: ${error.name} — ${error.message}`);
-  }
+      // Resend v4 returns { error } rather than throwing — surface it so the
+      // caller doesn't report a false success.
+      if (error) {
+        throw new Error(`Resend failed to send invite email: ${error.name} — ${error.message}`);
+      }
+    },
+  );
 }
 
 export async function sendSponsorRequestEmail(opts: {
@@ -81,12 +89,23 @@ export async function sendSponsorRequestEmail(opts: {
   desiredSpend?: string | null;
   message?: string | null;
 }) {
-  if (!process.env.RESEND_KEY) {
-    throw new Error('RESEND_KEY is not set — cannot send email');
-  }
-  if (opts.to.length === 0) return; // no admins to notify
+  await withSpan(
+    'email.send',
+    {
+      'app.email.kind': 'sponsorRequest',
+      'app.club.name': opts.clubName,
+      'app.email.recipients': opts.to.length,
+    },
+    async (span) => {
+      if (!process.env.RESEND_KEY) {
+        throw new Error('RESEND_KEY is not set — cannot send email');
+      }
+      if (opts.to.length === 0) {
+        span.setAttribute('app.email.skipped', true);
+        return; // no admins to notify
+      }
 
-  const row = (label: string, value?: string | null) =>
+      const row = (label: string, value?: string | null) =>
     value
       ? `<tr>
           <td style="padding:6px 0;font-size:13px;color:#888;width:120px;vertical-align:top;">${label}</td>
@@ -148,7 +167,11 @@ export async function sendSponsorRequestEmail(opts: {
 </html>`,
   });
 
-  if (error) {
-    throw new Error(`Resend failed to send sponsor request email: ${error.name} — ${error.message}`);
-  }
+      if (error) {
+        throw new Error(
+          `Resend failed to send sponsor request email: ${error.name} — ${error.message}`,
+        );
+      }
+    },
+  );
 }

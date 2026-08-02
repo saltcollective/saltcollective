@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '$env/dynamic/private';
+import { withSpan } from '$lib/server/telemetry';
 
 const ALLOWED_TYPES: Record<string, string> = {
   'image/png': 'png',
@@ -32,19 +33,25 @@ export async function createPresignedUpload(
   id: string,
   contentType: string
 ): Promise<{ uploadUrl: string; publicUrl: string }> {
-  const ext = ALLOWED_TYPES[contentType];
-  if (!ext) throw new Error(`Unsupported content type: ${contentType}`);
+  return withSpan(
+    's3.presignUpload',
+    { 'app.s3.folder': folder, 'app.s3.contentType': contentType },
+    async () => {
+      const ext = ALLOWED_TYPES[contentType];
+      if (!ext) throw new Error(`Unsupported content type: ${contentType}`);
 
-  const key = `${folder}/${id}/${Date.now()}.${ext}`;
+      const key = `${folder}/${id}/${Date.now()}.${ext}`;
 
-  const command = new PutObjectCommand({
-    Bucket: requireEnv('AWS_S3_BUCKET'),
-    Key: key,
-    ContentType: contentType,
-  });
+      const command = new PutObjectCommand({
+        Bucket: requireEnv('AWS_S3_BUCKET'),
+        Key: key,
+        ContentType: contentType,
+      });
 
-  const uploadUrl = await getSignedUrl(client, command, { expiresIn: PRESIGNED_URL_TTL });
-  const publicUrl = `https://${requireEnv('AWS_CLOUDFRONT_DOMAIN')}/${key}`;
+      const uploadUrl = await getSignedUrl(client, command, { expiresIn: PRESIGNED_URL_TTL });
+      const publicUrl = `https://${requireEnv('AWS_CLOUDFRONT_DOMAIN')}/${key}`;
 
-  return { uploadUrl, publicUrl };
+      return { uploadUrl, publicUrl };
+    },
+  );
 }

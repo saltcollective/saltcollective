@@ -283,6 +283,16 @@ Denormalised lifecycle columns: `User.lastActiveAt` (maintained by `hooks.server
 
 Impersonation mechanics: Impersonate button on `/admin/clubs/[id]` creates an `ImpersonationLog` row (club side relation-free, survives club deletion) and sets the `impersonation_session` cookie (httpOnly, 2 h, value = log row id — forgery is inert since the helper validates row + SITE_ADMIN). The `(app)` layout shows an amber banner with an End button (`POST /api/impersonation/stop`). Start/end emit `CLUB_IMPERSONATION_STARTED/ENDED`; actions during impersonation record the admin's real identity as audit actor. Starting a session auto-closes any previous open one.
 
+## Observability (OpenTelemetry)
+
+Deno Deploy's built-in OTel dashboard (deploy.deno.com → app → Traces/Logs/Metrics) is the only telemetry backend — no external export, no collector, no env vars in production. The Deno runtime auto-instruments `fetch` (every Accelerate query, Clerk call, Resend send) and `console.*` logs; incoming `node:http` requests are **not** auto-instrumented, so `hooks.server.ts` has a `telemetryHandle` (first in the `sequence`) that opens one SERVER span per request, named `"<METHOD> <route.id>"`, with route/status/user attributes, stashed on `event.locals.requestSpan` for enrichment. A `handleError` hook records ≥500 load/action errors onto it.
+
+**`apps/hub/src/lib/server/telemetry.ts` is the only OTel touchpoint** — `tracer`, `withSpan(name, attrs, fn)` (records exception + ERROR, always ends, rethrows) and `recordError(span, err)` (for deliberately swallowed errors, e.g. `logAudit`). Import only `@opentelemetry/api` (declared in `apps/hub/package.json`; it's an optional peer dep of SvelteKit) — **never an OTel SDK**; Deploy owns the SDK side, and under plain Node (normal `vite dev`) the API is a silent no-op.
+
+Instrumented ops: `clubAccess.resolve` (club id/slug/role, `app.club.source`, `app.impersonating`, mirrored onto the request span), `auth.resolveUser` (user provisioning in hooks), `audit.log` (failed audit writes show as ERROR spans — they're otherwise swallowed by design), `email.send` (kind/recipient-count only — no addresses; no PII in span attributes generally), `s3.presignUpload`.
+
+Local span inspection: `deno task --tunnel dev:otel` (in `apps/hub`) runs vite under Deno with `OTEL_DENO=true` and the console exporter. Normal `deno task dev` runs under Node → telemetry no-ops. Future option: SvelteKit ≥2.58 has experimental built-in server tracing (`kit.experimental.tracing.server`) — if ever enabled, revisit `telemetryHandle` to avoid duplicate spans.
+
 ## Known performance issue — sequential DB round-trips
 
 Every `(app)` page server calls `await parent()` to get `club.id`, which means page queries cannot start until the layout's `clubMembership.findFirst` completes. This causes two sequential Prisma Accelerate round-trips on every dashboard page load.
