@@ -45,12 +45,6 @@ const telemetryHandle: Handle = ({ event, resolve }) => {
     },
     parentCtx,
     async (span) => {
-      // TEMP diagnostic — remove once spans are confirmed nesting in the
-      // Deploy Traces view. recording=false → no OTel provider in the
-      // runtime; differing traceId → traceparent not propagated to us.
-      console.log(
-        `[otel-diag] route=${routeId} recording=${span.isRecording()} traceId=${span.spanContext().traceId} traceparent=${event.request.headers.get('traceparent') ?? 'none'}`,
-      );
       event.locals.requestSpan = span;
       try {
         const response = await resolve(event);
