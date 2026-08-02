@@ -1,7 +1,7 @@
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { withClerkHandler, clerkClient } from 'svelte-clerk/server';
-import { trace } from '@opentelemetry/api';
+import { context, propagation, trace, type TextMapGetter } from '@opentelemetry/api';
 import { prisma } from '@saltcollective/schema';
 import { logAudit } from '$lib/server/audit';
 import { tracer, withSpan, SpanKind, SpanStatusCode } from '$lib/server/telemetry';
@@ -18,12 +18,21 @@ const USER_SELECT = {
 // One lastActiveAt write per user per hour at most.
 const LAST_ACTIVE_THROTTLE_MS = 60 * 60 * 1000;
 
+const headersGetter: TextMapGetter<Headers> = {
+  get: (headers, key) => headers.get(key) ?? undefined,
+  keys: (headers) => [...headers.keys()],
+};
+
 // Outermost handler: one SERVER span per request. Deno's built-in OTel does
 // not instrument node:http (our adapter-node path), so this span is what ties
 // the auto-captured fetch spans (Accelerate, Clerk, Resend) to a request.
 // User attrs are set in `finally` — locals.user exists by then.
 const telemetryHandle: Handle = ({ event, resolve }) => {
   const routeId = event.route.id ?? event.url.pathname;
+  // node:http requests carry no active OTel context — extract the traceparent
+  // header ourselves so this span joins the platform's request trace instead
+  // of starting an orphan trace.
+  const parentCtx = propagation.extract(context.active(), event.request.headers, headersGetter);
   return tracer.startActiveSpan(
     `${event.request.method} ${routeId}`,
     {
@@ -34,7 +43,14 @@ const telemetryHandle: Handle = ({ event, resolve }) => {
         'url.path': event.url.pathname,
       },
     },
+    parentCtx,
     async (span) => {
+      // TEMP diagnostic — remove once spans are confirmed nesting in the
+      // Deploy Traces view. recording=false → no OTel provider in the
+      // runtime; differing traceId → traceparent not propagated to us.
+      console.log(
+        `[otel-diag] route=${routeId} recording=${span.isRecording()} traceId=${span.spanContext().traceId} traceparent=${event.request.headers.get('traceparent') ?? 'none'}`,
+      );
       event.locals.requestSpan = span;
       try {
         const response = await resolve(event);
