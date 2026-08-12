@@ -5,6 +5,7 @@ import { withAccelerate } from '@prisma/extension-accelerate';
 
 function createPrismaClient() {
   const datasourceUrl = process.env.PRISMA_URL;
+  console.log('PRISMA_URL:', datasourceUrl);
   if (!datasourceUrl) throw new Error('PRISMA_URL is not set');
   return new PrismaClient({ datasourceUrl }).$extends(withAccelerate());
 }
