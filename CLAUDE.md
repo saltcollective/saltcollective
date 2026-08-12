@@ -145,6 +145,15 @@ Defined in `packages/schema/deno.json`. All operations connect to Prisma Postgre
 
 Local DB operations require the `--tunnel` flag to inject environment variables. The canonical change workflow is **edit model → `deno task --tunnel db:migrate` → commit migration → push → CD runs `db:migrate:deploy`** (see [Database change workflow](#database-change-workflow-canonical)). `db:migrate:deploy` runs in CD without `--tunnel` (Deno Deploy injects the env). `db:push` skips migration files and causes history drift — only for a throwaway/fresh dev environment where data loss is acceptable, never in the normal workflow.
 
+## Staging Environment
+
+The `staging` branch auto-deploys to `saltcollective--staging.saltcollective.deno.net` (Deno Deploy branch timeline). Flow: develop locally → push/merge to `staging` → verify on the staging URL → merge `staging` into `main` for production. Full details: `docs/infrastructure/staging.md`.
+
+- Env vars are scoped to **contexts** in the Deno Deploy dashboard: `Production` (main), `Preview` (staging + all branch/preview deploys), `Local` (`--tunnel`), `Build`. `PRISMA_URL` and `PUBLIC_SITE_DOMAIN` differ per context; everything else is scoped `All`.
+- Each timeline gets its own logical database in the one Prisma Postgres instance: `c95a0e-production`, `c95a0e--staging`, `c95a0e-preview` (used by local dev). The `Preview`-context `PRISMA_URL` is the staging DB's Accelerate key — staging data is fully isolated from prod and local dev.
+- Migrations: the pre-deploy command (`deno task db:migrate:deploy`) runs per timeline rollout against the injected `DATABASE_URL`, so pushing to `staging` migrates the staging DB and merging to `main` migrates prod. The canonical schema-change workflow is unchanged.
+- Caveats: staging sends **real emails** (shared `RESEND_KEY`), shares the Clerk instance with prod, and env-var values must be bare URLs (`prisma+postgres://…` — never the `DATABASE_URL="…"` line from the Prisma console's copy button).
+
 ## Adapter Note
 
 `@sveltejs/adapter-auto` is used. Deno Deploy is not in adapter-auto's platform detection list — it will fall back to `adapter-node`, which runs via Deno's Node.js compatibility mode. If platform-specific issues arise at deploy time, the escape hatch is switching to `@sveltejs/adapter-deno`.
